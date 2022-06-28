@@ -7,7 +7,7 @@ from rest_framework.routers import DefaultRouter
 from polls_and_questions import views
 
 router = DefaultRouter()
-router.register('setup', views.SetupViewSet, basename='setup')
+router.register(r'setup', views.SetupViewSet, basename='setup')
 
 urlpatterns = [
     path('', include(router.urls))
