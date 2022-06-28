@@ -111,10 +111,20 @@ class QuestionConfig(BaseConfig):
     """
     Model for configuration of interation type Question.
 
+    enabled (bool): Indicate if Q&A component is enabled or not.
     allow_audience_answer (bool): Indicate if answer audience will be allowed or not.
+    allow_audience_create_questions (bool): Indicate if audience can create questions or not.
+    auto_publish (bool): Indicate if Auto-publish the questions since the moment they are created.
+    allow_audience_vote_questions (bool): Indicate if audience can vote questions or not.
+    allow_audience_vote_answers (bool): Indicate if audience can vote answers or not.
 
     """
+    enabled = models.BooleanField(_('is enabled'))
     allow_audience_answer = models.BooleanField()
+    allow_audience_create_questions = models.BooleanField(_('allow audience create questions'))
+    auto_publish = models.BooleanField(_('Auto publish the questions'))
+    allow_audience_vote_questions = models.BooleanField(_('audience can vote questions'))
+    allow_audience_vote_answers = models.BooleanField(_('audience can vote answers'))
 
     def __str__(self):
         return "%s" % self.id

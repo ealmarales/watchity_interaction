@@ -14,7 +14,16 @@ class QuestionConfigModelSerialializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.QuestionConfig
-        fields = ('present_to_audience','allow_audience_answer', 'results_privacy')
+        fields = ('enabled',
+                  'allow_audience_answer',
+                  'allow_audience_create_questions',
+                  'auto_publish',
+                  'allow_audience_vote_questions',
+                  'allow_audience_vote_answers',
+                  'present_to_audience',
+                  'allow_audience_answer',
+                  'results_privacy',
+                  )
 
 class SetupModelSerializer(serializers.ModelSerializer):
     """Setup Model Serializer"""
@@ -25,23 +34,29 @@ class SetupModelSerializer(serializers.ModelSerializer):
         model = models.Setup
         fields = ('watchit_id', 'default_polls_config', 'default_questions_config', )
 
+
+
+class SetupSerializer(serializers.Serializer):
+    watchit_id = serializers.IntegerField()
+    default_polls_config = PollConfigModelSerialializer()
+    default_questions_config = QuestionConfigModelSerialializer()
+
+    def validate(self, attrs):
+        # TODO: Validando datos
+
+        return attrs
+
     def create(self, validated_data):
-        polls_config_data = validated_data.pop('default_polls_config')
-        questions_config_data = validated_data.pop('default_questions_config')
+        polls_config_data = validated_data.get('default_polls_config')
+        questions_config_data = validated_data.get('default_questions_config')
 
         polls_config = models.PollConfig.objects.create(**polls_config_data)
         questions_config = models.QuestionConfig.objects.create(**questions_config_data)
-        setup = models.Setup.objects.create(default_polls_config=polls_config,
+        setup = models.Setup.objects.create(watchit_id=validated_data.get('watchit_id'),
+                                            default_polls_config=polls_config,
                                             default_questions_config=questions_config,
-                                            **validated_data,
                                             )
         return setup
-
-    def update(self, instance, validated_data):
-        polls_config_data = validated_data.pop('default_polls_config')
-        questions_config_data = validated_data.pop('default_questions_config')
-
-        return instance
 
 
 
