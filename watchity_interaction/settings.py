@@ -38,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+	#3rd Apps
     'rest_framework',
-
+	'drf_yasg',
+	#Local Apps
     'polls_and_questions',
 ]
 
