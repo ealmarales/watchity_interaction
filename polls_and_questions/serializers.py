@@ -2,14 +2,16 @@ from rest_framework import serializers
 from polls_and_questions import models
 from polls_and_questions.models import PollConfig, QuestionConfig, Setup
 
-class PollConfigModelSerialializer(serializers.ModelSerializer):
+
+class PollConfigModelSerializer(serializers.ModelSerializer):
     """Poll Configuration Model Serializer"""
 
     class Meta:
         model = models.PollConfig
-        fields = ('present_to_audience','multiple_answers', 'results_privacy')
+        fields = ('present_to_audience', 'multiple_answers', 'results_privacy')
 
-class QuestionConfigModelSerialializer(serializers.ModelSerializer):
+
+class QuestionConfigModelSerializer(serializers.ModelSerializer):
     """Question Configuration Model Serializer"""
 
     class Meta:
@@ -25,43 +27,25 @@ class QuestionConfigModelSerialializer(serializers.ModelSerializer):
                   'results_privacy',
                   )
 
+
 class SetupModelSerializer(serializers.ModelSerializer):
-    """Setup Model Serializer"""
-    default_polls_config = PollConfigModelSerialializer()
-    default_questions_config = QuestionConfigModelSerialializer()
+    """ Setup Model Serializer """
+    default_polls_config = PollConfigModelSerializer()
+    default_questions_config = QuestionConfigModelSerializer()
 
     class Meta:
         model = models.Setup
         fields = ('watchit_id', 'default_polls_config', 'default_questions_config', )
 
-
-
-class SetupSerializer(serializers.Serializer):
-    watchit_id = serializers.IntegerField()
-    default_polls_config = PollConfigModelSerialializer()
-    default_questions_config = QuestionConfigModelSerialializer()
-
-    def validate(self, attrs):
-        # TODO: Validando datos
-
-        return attrs
-
     def create(self, validated_data):
-        polls_config_data = validated_data.get('default_polls_config')
-        questions_config_data = validated_data.get('default_questions_config')
+        polls_config_data = validated_data.pop('default_polls_config', None)
+        questions_config_data = validated_data.pop('default_questions_config', None)
 
-        polls_config = models.PollConfig.objects.create(**polls_config_data)
-        questions_config = models.QuestionConfig.objects.create(**questions_config_data)
-        setup = models.Setup.objects.create(watchit_id=validated_data.get('watchit_id'),
-                                            default_polls_config=polls_config,
-                                            default_questions_config=questions_config,
-                                            )
+        polls_config = PollConfig.objects.create(**polls_config_data)
+        questions_config = QuestionConfig.objects.create(**questions_config_data)
+
+        setup = Setup.objects.create(default_polls_config=polls_config,
+                                     default_questions_config=questions_config,
+                                     **validated_data,
+                                     )
         return setup
-
-
-
-
-
-
-
-

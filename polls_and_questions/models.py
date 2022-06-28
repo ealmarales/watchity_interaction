@@ -49,9 +49,11 @@ class PollConfig(BaseConfig):
     Model for Configuration of interation type Poll.
 
     Attributes:
+        enabled (bool): Indicate if Poll component is enabled or not.
         multiple_answers (bool): Indicate if multiple answer response will be allowed or not.
 
     """
+    enabled = models.BooleanField(_('is enabled'), default=True)
     multiple_answers = models.BooleanField(_('allow multiple answer response'))
 
     def __str__(self):
@@ -151,6 +153,9 @@ class QResponse(models.Model):
         verbose_name = _('question responses')
 
     def __str__(self):
+        """ Unicode representation of Response to Question"""
+
+
         return self.response
 
 
@@ -167,6 +172,7 @@ class Setup(models.Model):
     default_questions_config = models.ForeignKey(QuestionConfig, on_delete=models.CASCADE, related_name='default_questions_config')
 
     def __str__(self):
+        """ Unicode representation of Setup """
         return "%s" % self.watchit_id
 
 
