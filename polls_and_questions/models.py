@@ -14,10 +14,10 @@ class BaseConfig(models.Model):
 
     Attributes:
         present_to_audience (Boolean): Indicate if the interaction will be presented to the audience or not.
-        results_privacy(str): The result privacy value. The value will be one of RESULT_PRIVACY_CHOICES.
+        privacy_mode(str): The result privacy value. The value will be one of RESULT_PRIVACY_CHOICES.
     """
     present_to_audience = models.BooleanField(_('present polls_and_questions to the audience'))
-    results_privacy = models.CharField(_('results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
+    privacy_mode = models.CharField(_('results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
 
     class Meta:
         abstract = True
@@ -44,6 +44,24 @@ class Interaction(models.Model):
         return self.question
 
 
+ANSWERING_TIME_LIMIT_CHOICES = (
+    (0, ''),
+    (5, '5'),
+    (10, '10'),
+    (15, '15'),
+    (20, '20'),
+    (25, '25'),
+    (30, '30'),
+    (35, '35'),
+    (40, '40'),
+    (45, '45'),
+    (50, '50'),
+    (55, '55'),
+    (60, '60'),
+    (65, '65'),
+    (70, '70'),
+    (75, '75'),
+)
 class PollConfig(BaseConfig):
     """
     Model for Configuration of interation type Poll.
@@ -51,10 +69,12 @@ class PollConfig(BaseConfig):
     Attributes:
         enabled (bool): Indicate if Poll component is enabled or not.
         multiple_answers (bool): Indicate if multiple answer response will be allowed or not.
+        answering_time_limit (int): Time limit for answering.
 
     """
-    enabled = models.BooleanField(_('is enabled'), default=True)
+    enabled = models.BooleanField(_('is enabled'))
     multiple_answers = models.BooleanField(_('allow multiple answer response'))
+    answering_time_limit = models.PositiveIntegerField(choices=ANSWERING_TIME_LIMIT_CHOICES, default=0)
 
     def __str__(self):
         return "%s" % self.id
@@ -66,8 +86,27 @@ class Poll(Interaction):
 
     Attributes:
         poll_config (PollConfig): The poll configuration.
+        creation_date (DateTime): Creation Date for the poll.
+        published (bool): Indicate if the poll is published or not.
+        streaming (bool): Indicate if the poll is streaming or not.
+
     """
     poll_config = models.ForeignKey(PollConfig, on_delete=models.CASCADE)
+    creation_date = models.DateTimeField()
+    published = models.BooleanField(_('is published'))
+    streaming = models.BooleanField(_('is streaming'))
+
+    @property
+    def creator_username(self):
+        """ Return username of creator """
+        # TODO: obtener el username de una fuente o servicio externo
+        return 'creator name'
+
+    @property
+    def creator_scren_name(self):
+        """ Return the creator screen name """
+        # TODO: obtener el valor de una fuente o servicio externo
+        return 'scren_name'
 
 
 class Choice(models.Model):
@@ -79,7 +118,7 @@ class Choice(models.Model):
     order (int): Order for choice in poll's list of options will appear in.
 
     """
-    poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='answers')
     choice = models.CharField(_('choice'), max_length=256)
     order = models.PositiveIntegerField(_('order'))
 

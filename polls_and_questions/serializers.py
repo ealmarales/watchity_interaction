@@ -8,7 +8,8 @@ class PollConfigModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.PollConfig
-        fields = ('present_to_audience', 'multiple_answers', 'results_privacy')
+        fields = '__all__'
+        read_only_flields = ('id', )
 
 
 class QuestionConfigModelSerializer(serializers.ModelSerializer):
@@ -16,7 +17,8 @@ class QuestionConfigModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.QuestionConfig
-        fields = ('enabled',
+        fields = ('id',
+                  'enabled',
                   'allow_audience_answer',
                   'allow_audience_create_questions',
                   'auto_publish',
@@ -24,7 +26,7 @@ class QuestionConfigModelSerializer(serializers.ModelSerializer):
                   'allow_audience_vote_answers',
                   'present_to_audience',
                   'allow_audience_answer',
-                  'results_privacy',
+                  'privacy_mode',
                   )
 
 
@@ -49,3 +51,28 @@ class SetupModelSerializer(serializers.ModelSerializer):
                                      **validated_data,
                                      )
         return setup
+
+
+class PollModelSerializer(serializers.ModelSerializer):
+    """ Poll Model Serializer """
+    answers = serializers.StringRelatedField(many=True)
+    poll_config = PollConfigModelSerializer()
+
+    class Meta:
+        model = models.Poll
+        fields = ('creator_username',
+                  'creator_scren_name',
+                  'creation_date',
+                  'question',
+                  'answers',
+                  'published',
+                  'streaming',
+                  'poll_config',
+
+                  )
+
+
+
+
+
+

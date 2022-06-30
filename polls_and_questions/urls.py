@@ -7,13 +7,20 @@ from rest_framework.routers import DefaultRouter
 from polls_and_questions import views
 
 router = DefaultRouter()
-router.register('config', views.SetupApiViewSet, basename='setup')
+
+router.register('watchit', views.SetupModelViewSet, basename='watchit')
 
 urlpatterns = [
-    # path('hello', views.HelloApiView.as_view()),
 
-    # path('config', views.SetupApiView.as_view()),
 
-    path('', include(router.urls))
+    path('', include(router.urls)),
+
+    path('watchit/<int:watchit_id>/poll/configuration/', views.DefaultConfigPollManagerApiView.as_view()),
+    path('watchit/<int:watchit_id>/qa/configuration/', views.DefaultConfigQuestionManagerApiView.as_view()),
+
+    path('watchit/<int:watchit_id>/poll/configuration/<int:poll_configuration_id>/',
+         views.ConfigPollManagerApiView.as_view()),
+    path('watchit/<int:watchit_id>/qa/configuration/<int:question_configuration_id>/',
+         views.ConfigQuestionManagerApiView.as_view()),
 
 ]
