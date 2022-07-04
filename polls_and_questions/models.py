@@ -59,9 +59,9 @@ ANSWERING_TIME_LIMIT_CHOICES = (
     (75, '75'),
 )
 
-class DefaultPollConfig(models.Model):
+class PollConfig(models.Model):
     """
-    Model for default Configuration of interation type Poll.
+    Model for Configuration of interation type Poll.
 
     Attributes:
         enabled (bool): Indicate if Poll component is enabled or not.
@@ -140,9 +140,9 @@ class PResponse(models.Model):
         verbose_name = _('poll responses')
 
 
-class DefaultQuestionConfig(models.Model):
+class QuestionConfig(models.Model):
     """
-    Model for default configuration of interation type Question.
+    Model for configuration of interation type Question.
 
     enabled (bool): Indicate if Q&A component is enabled or not.
     allow_audience_create_questions (bool): Indicate if audience can create questions or not.
@@ -206,8 +206,8 @@ class EventConfig(models.Model):
 
     """
     watchit_id = models.UUIDField('event identifier', primary_key=True)  # TODO: use UUID field
-    default_polls_config = models.ForeignKey(DefaultPollConfig, on_delete=models.CASCADE, related_name='default_polls_config')
-    default_questions_config = models.ForeignKey(DefaultQuestionConfig, on_delete=models.CASCADE, related_name='default_questions_config')
+    default_polls_config = models.ForeignKey(PollConfig, on_delete=models.CASCADE, related_name='default_polls_config')
+    default_questions_config = models.ForeignKey(QuestionConfig, on_delete=models.CASCADE, related_name='default_questions_config')
 
     def __str__(self):
         """ Unicode representation of EventConfig """

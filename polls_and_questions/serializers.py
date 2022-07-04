@@ -1,13 +1,13 @@
 from rest_framework import serializers
 from polls_and_questions import models
-from polls_and_questions.models import DefaultPollConfig, DefaultQuestionConfig, EventConfig
+from polls_and_questions.models import PollConfig, QuestionConfig, EventConfig
 
 
 class DefaultPollConfigModelSerializer(serializers.ModelSerializer):
     """Default Poll Configuration Model Serializer"""
 
     class Meta:
-        model = models.DefaultPollConfig
+        model = models.PollConfig
         fields = '__all__'
         read_only_flields = ('id', )
 
@@ -16,7 +16,7 @@ class DefaultQuestionConfigModelSerializer(serializers.ModelSerializer):
     """Default Question Configuration Model Serializer"""
 
     class Meta:
-        model = models.DefaultQuestionConfig
+        model = models.QuestionConfig
         fields = '__all__'
         read_only_flields = ('id', )
 
@@ -29,7 +29,7 @@ class PollUpdateModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Poll
-        fields = ('answering_time_limit', 'privacy_mode', 'multiple_answers')
+        fields = ('privacy_mode', 'multiple_answers')
 
 class QuestionUpdateModelSerializer(serializers.ModelSerializer):
     """Question Update Model Serializer"""
@@ -53,8 +53,8 @@ class SetupModelSerializer(serializers.ModelSerializer):
         polls_config_data = validated_data.pop('default_polls_config', None)
         questions_config_data = validated_data.pop('default_questions_config', None)
 
-        polls_config = DefaultPollConfig.objects.create(**polls_config_data)
-        questions_config = DefaultQuestionConfig.objects.create(**questions_config_data)
+        polls_config = PollConfig.objects.create(**polls_config_data)
+        questions_config = QuestionConfig.objects.create(**questions_config_data)
 
         setup = EventConfig.objects.create(default_polls_config=polls_config,
                                            default_questions_config=questions_config,

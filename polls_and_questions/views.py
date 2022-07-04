@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from polls_and_questions import serializers
-from polls_and_questions.models import EventConfig, Poll, DefaultPollConfig, Question, DefaultQuestionConfig
+from polls_and_questions.models import EventConfig, Poll, PollConfig, Question, QuestionConfig
 
 from django.utils.translation import gettext_lazy as _
 
@@ -196,25 +196,25 @@ class DefaultConfigQuestionManagerApiView(APIView):
 class ConfigPollManagerApiView(APIView):
     """ Manage configuration for a poll.  """
 
-    def get_object(self, watchit_id: UUID, poll_configutarion_id) -> DefaultPollConfig:
+    def get_object(self, watchit_id: UUID, poll_configutarion_id) -> PollConfig:
         """
-        Retrieve de DefaultPollConfig instance for watchit_id.
+        Retrieve de PollConfig instance for watchit_id.
 
         Args:
             watchit_id (UUID):  The watchit identifier.
             poll_configutarion_id (int): Default Poll Config identifier.
         Raises:
               ValidationError: when EventConfig instance is not found.
-              ValidationError: when DefaultPollConfig is not found.
-        Returns: DefaultPollConfig instance
+              ValidationError: when PollConfig is not found.
+        Returns: PollConfig instance
 
         """
         try:
-            event_config = EventConfig.objects.get(watchit_id=watchit_id)
+            EventConfig.objects.get(watchit_id=watchit_id)
             try:
-                default_poll_config = DefaultPollConfig.objects.get(pk=poll_configutarion_id)
+                default_poll_config = PollConfig.objects.get(pk=poll_configutarion_id)
                 return default_poll_config
-            except DefaultPollConfig.DoesNotExist:
+            except PollConfig.DoesNotExist:
                 raise ValidationError({'question_configuration_id': _('Poll Configuration not found')})
         except EventConfig.DoesNotExist:
             raise ValidationError({'watchit_id': _('Event not found')})
@@ -225,7 +225,7 @@ class ConfigPollManagerApiView(APIView):
         Args:
             watchit_id: The watchit identifier.
             poll_configuration_id: The poll configuration identifier.
-        Returns: DefaultPollConfig instance.
+        Returns: PollConfig instance.
 
         """
         poll_config = self.get_object(watchit_id=watchit_id, poll_configutarion_id=poll_configuration_id)
@@ -241,7 +241,7 @@ class ConfigPollManagerApiView(APIView):
             watchit_id (UUID): The watchit identifier.
             poll_configuration_id (UUID): The poll configuration identifier.
 
-        Returns: DefaultPollConfig instance.
+        Returns: PollConfig instance.
 
         """
         poll_config = self.get_object(watchit_id=watchit_id, poll_configutarion_id=poll_configuration_id)
@@ -255,25 +255,25 @@ class ConfigPollManagerApiView(APIView):
 class ConfigQuestionManagerApiView(APIView):
     """ Manage configuration for a Question.  """
 
-    def get_object(self, watchit_id: UUID, question_configutarion_id) -> DefaultQuestionConfig:
+    def get_object(self, watchit_id: UUID, question_configutarion_id) -> QuestionConfig:
         """
-        Retrieve de DefaultQuestionConfig instance for watchit_id.
+        Retrieve de QuestionConfig instance for watchit_id.
 
         Args:
             watchit_id (UUID):  The watchit identifier.
             question_configutarion_id (int): Default Question Config identifier.
         Raises:
               ValidationError: when EventConfig instance is not found.
-              ValidationError: when DefaultQuestionConfig is not found.
-        Returns: DefaultQuestionConfig instance
+              ValidationError: when QuestionConfig is not found.
+        Returns: QuestionConfig instance
 
         """
         try:
             event_config = EventConfig.objects.get(watchit_id=watchit_id)
             try:
-                default_question_config = DefaultQuestionConfig.objects.get(pk=question_configutarion_id)
+                default_question_config = QuestionConfig.objects.get(pk=question_configutarion_id)
                 return default_question_config
-            except DefaultQuestionConfig.DoesNotExist:
+            except QuestionConfig.DoesNotExist:
                 raise ValidationError({'question_configuration_id': _('Question Configuration not found')})
         except EventConfig.DoesNotExist:
             raise ValidationError({'watchit_id': _('Event not found')})
@@ -284,7 +284,7 @@ class ConfigQuestionManagerApiView(APIView):
         Args:
             watchit_id: The watchit identifier.
             question_configuration_id: The question configuration identifier.
-        Returns: DefaultQuestionConfig instance.
+        Returns: QuestionConfig instance.
 
         """
         question_config = self.get_object(watchit_id=watchit_id, question_configutarion_id=question_configuration_id)
@@ -300,7 +300,7 @@ class ConfigQuestionManagerApiView(APIView):
             watchit_id (UUID): The watchit identifier.
             question_configuration_id (UUID): The Question configuration identifier.
 
-        Returns: DefaultQuestionConfig instance.
+        Returns: QuestionConfig instance.
 
         """
         question_config = self.get_object(watchit_id=watchit_id, question_configutarion_id=question_configuration_id)
