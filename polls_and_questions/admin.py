@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from polls_and_questions.models import PollConfig, Choice, Poll, PResponse, QuestionConfig, \
-    Question, QResponse, Setup
+from polls_and_questions.models import DefaultPollConfig, Choice, Poll, PResponse, DefaultQuestionConfig, \
+    Question, QResponse, EventConfig
 
 
-admin.site.register(PollConfig)
+admin.site.register(DefaultPollConfig)
 admin.site.register(Choice)
 
 
@@ -23,8 +23,8 @@ class PResponseAdmin(admin.ModelAdmin):
 
 
 # ---------------------------------------
-@admin.register(QuestionConfig)
-class QuestionConfigAdmin(admin.ModelAdmin):
+@admin.register(DefaultQuestionConfig)
+class DefaultQuestionConfigAdmin(admin.ModelAdmin):
     pass
 
 
@@ -36,9 +36,9 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [QResponseInline]
 
 @admin.register(QResponse)
-class QResponseAdminy(admin.ModelAdmin):
+class QResponseAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(Setup)
-class SetupAdmin(admin.ModelAdmin):
+@admin.register(EventConfig)
+class EventConfigAdmin(admin.ModelAdmin):
     pass
