@@ -9,113 +9,87 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from polls_and_questions import serializers
+from polls_and_questions import serializers, services
 from polls_and_questions.models import EventConfig, Poll, PollConfig, Question, QuestionConfig
 
 from django.utils.translation import gettext_lazy as _
 
-class SetupApiViewSet(mixins.ListModelMixin,
-                      mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin,
-                      viewsets.GenericViewSet):
-    serializer_class = serializers.SetupModelSerializer
-    queryset = EventConfig.objects.all()
-
-    def perform_create(self, serializer):
-        """ Create a default configuration for an event """
-        serializer.save()
-
-    @action(detail=True, methods=['PATCH', ])
-    def default_polls_config(self, request, pk):
-        """
-        Enable / Disable default configuration for polls in event.
-        """
-        default_polls_config = self.get_object().default_polls_config
-        default_polls_config.enabled = not default_polls_config.enabled
-        default_polls_config.save()
-
-        response = {
-            'enabled': default_polls_config.enabled
-        }
-        return Response(response)
-
-    @action(detail=True, methods=['PATCH'])
-    def default_questions_config(self, request, pk):
-        """
-        Enable / Disable default configuration for questions in event.
-        """
-        default_questions_config = self.get_object().default_questions_config
-        default_questions_config.enabled = not default_questions_config.enabled
-        default_questions_config.save()
-
-        response = {
-            'enabled': default_questions_config.enabled
-        }
-        return Response(response)
-
-
-
-
-class EventConfigModelViewSet(ModelViewSet):
-    """ Manage configurations for an EventConfig """
-
-    model = EventConfig
-    serializer_class = serializers.SetupModelSerializer
-    queryset = EventConfig.objects.all()
-
-
-class DefaultConfigPollManagerApiView(APIView):
-    """ Manage default polls configuration for an event.  """
+class ConfigManager(APIView):
+    """ Abstract class for manage Event Configurations """
 
     serializer_class = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.serializer_class = serializers.DefaultPollConfigModelSerializer
-
-
-    def get_object(self, watchit_id: UUID) -> EventConfig:
+    def _validate_watchit_id(self, watchit_id: UUID):
         """
-        Retrieve de EventConfig instance for watchit_id.
 
         Args:
-            watchit_id (UUID):  The watchit identifier.
+            watchit_id: watchit identifier.
+
         Raises:
-              ValidationError: when EventConfig instance is not found.
-        Returns: EventConfig instance
+            ValidationError: When watchit_id is not found.
+
+        Returns:
 
         """
+        if not services.check_watchit_uuid(watchit_id=watchit_id):
+            raise ValidationError({'watchit_id': _('watchit not found')})
 
+    def _get_event_config(self, watchit_id: UUID):
+        """
+        Retrieve the event config for an event.
+
+        Args:
+            watchit_id: watchit identifier.
+
+        Raises:
+            ValidationError: When event config is not found.
+        """
         try:
-            event_config = EventConfig.objects.get(watchit_id=watchit_id)
-            return event_config
+            return EventConfig.objects.get(watchit_id=watchit_id)
         except EventConfig.DoesNotExist:
-            raise ValidationError({'watchit_id': _('Event not found')})
+            raise ValidationError({'watchit_id': _('event config not found')})
 
+
+class DefaultConfigPollManagerApiView(ConfigManager):
+    """ Manage default polls configuration for an event.  """
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_class = serializers.PollConfigModelSerializer
 
     def get(self, request, watchit_id, format=None):
-        """ Retrieve default polls configuration for an event. """
-
-        event_config = self.get_object(watchit_id=watchit_id)
-        default_poll_config = event_config.default_polls_config
-        serializer = self.serializer_class(default_poll_config)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-    @swagger_auto_schema(request_body=serializers.DefaultPollConfigModelSerializer)
-    def post(self, request, watchit_id, format=None):
-        """ Save default poll configuration for an event.
+        """ Retrieve default polls configuration for an event.
         """
-        event_config = self.get_object(watchit_id=watchit_id)
+        self._validate_watchit_id(watchit_id=watchit_id)
+        event_config = self._get_event_config(watchit_id=watchit_id)
+        if event_config.default_polls_config:
+            default_poll_config = event_config.default_polls_config
+            serializer = self.serializer_class(default_poll_config)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        raise ValidationError({'watchit_id': _('poll config not found')})
+
+    @swagger_auto_schema(request_body=serializers.PollConfigModelSerializer)
+    def post(self, request, watchit_id, format=None):
+        """
+        Save default poll configuration for an event.
+
+        If configuration event not exist is created, if configuration event exist and have a poll configuration this is
+        removed and changed for the new poll configuration.
+        """
+        self._validate_watchit_id(watchit_id=watchit_id)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
+            event_config, created = EventConfig.objects.get_or_create(watchit_id=watchit_id)
             old_polls_config = event_config.default_polls_config
+
             new_polls_config = serializer.save()
             event_config.default_polls_config = new_polls_config
             event_config.save()
 
             # deleting old_polls_config
-            old_polls_config.delete()
+            if old_polls_config:
+                old_polls_config.delete()
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -123,101 +97,26 @@ class DefaultConfigPollManagerApiView(APIView):
     def patch(self, request, watchit_id, format=None):
         """ Enable / Disable default configuration for polls in event. """
 
-        setup = self.get_object(watchit_id=watchit_id)
-        default_polls_config = setup.default_polls_config
-        default_polls_config.enabled = not default_polls_config.enabled
-        default_polls_config.save()
+        self._validate_watchit_id(watchit_id=watchit_id)
+        event_config = self._get_event_config(watchit_id=watchit_id)
+        if event_config.default_polls_config:
+            default_polls_config = event_config.default_polls_config
+            default_polls_config.enabled = not default_polls_config.enabled
+            default_polls_config.save()
 
-        response = {
-            'enabled': default_polls_config.enabled
-        }
-        return Response(response, status=status.HTTP_200_OK)
+            response = {
+                'enabled': default_polls_config.enabled
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        raise ValidationError({'watchit_id': _('poll config not found')})
 
-
-class DefaultConfigQuestionManagerApiView(APIView):
-    """ Manage default questions configuration for an event.  """
-
-    def get_object(self, watchit_id: UUID) -> EventConfig:
-        """
-        Retrieve de EventConfig instance for watchit_id.
-
-        Args:
-            watchit_id (UUID):  The watchit identifier.
-        Raises:
-              ValidationError: when EventConfig instance is not found.
-        Returns: EventConfig instance
-
-        """
-
-        try:
-            event_config = EventConfig.objects.get(watchit_id=watchit_id)
-            return event_config
-        except EventConfig.DoesNotExist:
-            raise ValidationError({'watchit_id': _('Event not found')})
-
-    def get(self, request, watchit_id, format=None):
-        """ Retrieve default question configuration for an event. """
-
-        event_config = self.get_object(watchit_id=watchit_id)
-        default_questions_config = event_config.default_questions_config
-        serializer = serializers.DefaultQuestionConfigModelSerializer(default_questions_config)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @swagger_auto_schema(request_body=serializers.DefaultQuestionConfigModelSerializer)
-    def post(self, request, watchit_id, format=None):
-        """ Save default questions configuration for an event.
-        """
-        event_config = self.get_object(watchit_id=watchit_id)
-        serializer = serializers.DefaultQuestionConfigModelSerializer(data=request.data)
-        if serializer.is_valid():
-            old_questions_config = event_config.default_questions_config
-            new_questions_config = serializer.save()
-            event_config.default_questions_config = new_questions_config
-            event_config.save()
-            # deleting old default_questions_config
-            old_questions_config.delete()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def patch(self, request, watchit_id, format=None):
-        """ Enable / Disable default configuration for questions in event. """
-
-        event_config = self.get_object(watchit_id=watchit_id)
-        default_questions_config = event_config.default_questions_config
-        default_questions_config.enabled = not default_questions_config.enabled
-        default_questions_config.save()
-
-        response = {
-            'enabled': default_questions_config.enabled
-        }
-        return Response(response, status=status.HTTP_200_OK)
-
-
-class ConfigPollManagerApiView(APIView):
+class ConfigPollManagerApiView(ConfigManager):
     """ Manage configuration for a poll.  """
 
-    def get_object(self, watchit_id: UUID, poll_configutarion_id) -> PollConfig:
-        """
-        Retrieve de PollConfig instance for watchit_id.
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_class = serializers.PollConfigModelSerializer
 
-        Args:
-            watchit_id (UUID):  The watchit identifier.
-            poll_configutarion_id (int): Default Poll Config identifier.
-        Raises:
-              ValidationError: when EventConfig instance is not found.
-              ValidationError: when PollConfig is not found.
-        Returns: PollConfig instance
-
-        """
-        try:
-            EventConfig.objects.get(watchit_id=watchit_id)
-            try:
-                default_poll_config = PollConfig.objects.get(pk=poll_configutarion_id)
-                return default_poll_config
-            except PollConfig.DoesNotExist:
-                raise ValidationError({'question_configuration_id': _('Poll Configuration not found')})
-        except EventConfig.DoesNotExist:
-            raise ValidationError({'watchit_id': _('Event not found')})
 
     def get(self, request, watchit_id, poll_configuration_id, format=None):
         """
@@ -226,13 +125,20 @@ class ConfigPollManagerApiView(APIView):
             watchit_id: The watchit identifier.
             poll_configuration_id: The poll configuration identifier.
         Returns: PollConfig instance.
-
         """
-        poll_config = self.get_object(watchit_id=watchit_id, poll_configutarion_id=poll_configuration_id)
-        serializer = serializers.DefaultPollConfigModelSerializer(poll_config)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        super()._validate_watchit_id(watchit_id=watchit_id)
+        try:
+            poll_config = PollConfig.objects.get(pk=poll_configuration_id)
+            serializer = self.serializer_class(poll_config)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except PollConfig.DoesNotExist:
+            raise ValidationError({'poll_configuration_id': _('poll config not found')})
 
-    @swagger_auto_schema(request_body=serializers.PollUpdateModelSerializer)
+
+
+
+
+    @swagger_auto_schema(request_body=serializers.PollConfigUpdateModelSerializer)
     def put(self, request, watchit_id: UUID, poll_configuration_id: UUID, format=None):
         """
         Update poll configuration for a poll in event.
@@ -244,54 +150,105 @@ class ConfigPollManagerApiView(APIView):
         Returns: PollConfig instance.
 
         """
-        poll_config = self.get_object(watchit_id=watchit_id, poll_configutarion_id=poll_configuration_id)
-        serializer = serializers.PollUpdateModelSerializer(data=request.data)
+        super()._validate_watchit_id(watchit_id=watchit_id)
+        try:
+            poll_config = PollConfig.objects.get(pk=poll_configuration_id)
+            serializer = serializers.PollConfigUpdateModelSerializer(data=request.data)
+            if serializer.is_valid():
+                poll_config = serializer.update(poll_config, request.data)
+                return Response(serializers.PollConfigModelSerializer(poll_config).data,
+                                status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except PollConfig.DoesNotExist:
+            raise ValidationError({'poll_configuration_id': _('poll config not found')})
+
+
+class DefaultConfigQuestionManagerApiView(ConfigManager):
+    """ Manage default questions configuration for an event.  """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_class = serializers.QuestionConfigModelSerializer
+
+    def get(self, request, watchit_id, format=None):
+        """ Retrieve default question configuration for an event. """
+
+        self._validate_watchit_id(watchit_id=watchit_id)
+        event_config = self._get_event_config(watchit_id=watchit_id)
+        if event_config.default_questions_config:
+            default_question_config = event_config.default_questions_config
+            serializer = self.serializer_class(default_question_config)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        raise ValidationError({'watchit_id': _('question config not found')})
+
+    @swagger_auto_schema(request_body=serializers.QuestionConfigModelSerializer)
+    def post(self, request, watchit_id, format=None):
+        """
+        Save default question configuration for an event.
+
+        If configuration event not exist is created, if configuration event exist and have a default question
+        configuration this is removed and changed for the new question configuration.
+        """
+        self._validate_watchit_id(watchit_id=watchit_id)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            poll_config = serializer.update(poll_config, request.data)
-            return Response(serializers.DefaultPollConfigModelSerializer(poll_config).data, status=status.HTTP_200_OK)
+            event_config, created = EventConfig.objects.get_or_create(watchit_id=watchit_id)
+            old_question_config = event_config.default_questions_config
+
+            new_question_config = serializer.save()
+            event_config.default_questions_config = new_question_config
+            event_config.save()
+
+            # deleting old_question_config
+            if old_question_config:
+                old_question_config.delete()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def patch(self, request, watchit_id, format=None):
+        """ Enable / Disable default configuration for questions in event. """
 
-class ConfigQuestionManagerApiView(APIView):
+        self._validate_watchit_id(watchit_id=watchit_id)
+        event_config = self._get_event_config(watchit_id=watchit_id)
+        if event_config.default_questions_config:
+            default_question_config = event_config.default_questions_config
+            default_question_config.enabled = not default_question_config.enabled
+            default_question_config.save()
+
+            response = {
+                'enabled': default_question_config.enabled
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        raise ValidationError({'watchit_id': _('question config not found')})
+
+class ConfigQuestionManagerApiView(ConfigManager):
     """ Manage configuration for a Question.  """
 
-    def get_object(self, watchit_id: UUID, question_configutarion_id) -> QuestionConfig:
-        """
-        Retrieve de QuestionConfig instance for watchit_id.
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_class = serializers.QuestionConfigModelSerializer
 
-        Args:
-            watchit_id (UUID):  The watchit identifier.
-            question_configutarion_id (int): Default Question Config identifier.
-        Raises:
-              ValidationError: when EventConfig instance is not found.
-              ValidationError: when QuestionConfig is not found.
-        Returns: QuestionConfig instance
-
-        """
-        try:
-            event_config = EventConfig.objects.get(watchit_id=watchit_id)
-            try:
-                default_question_config = QuestionConfig.objects.get(pk=question_configutarion_id)
-                return default_question_config
-            except QuestionConfig.DoesNotExist:
-                raise ValidationError({'question_configuration_id': _('Question Configuration not found')})
-        except EventConfig.DoesNotExist:
-            raise ValidationError({'watchit_id': _('Event not found')})
 
     def get(self, request, watchit_id, question_configuration_id, format=None):
         """
-        Retrieve poll configuration for an event.
+        Retrieve question configuration for an event.
         Args:
             watchit_id: The watchit identifier.
             question_configuration_id: The question configuration identifier.
         Returns: QuestionConfig instance.
 
         """
-        question_config = self.get_object(watchit_id=watchit_id, question_configutarion_id=question_configuration_id)
-        serializer = serializers.DefaultQuestionConfigModelSerializer(question_config)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        super()._validate_watchit_id(watchit_id=watchit_id)
+        try:
+            question_config = QuestionConfig.objects.get(pk=question_configuration_id)
+            serializer = self.serializer_class(question_config)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except QuestionConfig.DoesNotExist:
+            raise ValidationError({'question_configuration_id': _('question config not found')})
 
-    @swagger_auto_schema(request_body=serializers.DefaultQuestionConfigModelSerializer)
+
+    @swagger_auto_schema(request_body=serializers.QuestionUpdateModelSerializer)
     def put(self, request, watchit_id: UUID, question_configuration_id: UUID, format=None):
         """
         Update Question configuration for a poll in event.
@@ -303,12 +260,19 @@ class ConfigQuestionManagerApiView(APIView):
         Returns: QuestionConfig instance.
 
         """
-        question_config = self.get_object(watchit_id=watchit_id, question_configutarion_id=question_configuration_id)
-        serializer = serializers.DefaultQuestionConfigModelSerializer(data=request.data)
-        if serializer.is_valid():
-            question_config = serializer.update(question_config, request.data)
-            return Response(serializers.DefaultQuestionConfigModelSerializer(question_config).data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        super()._validate_watchit_id(watchit_id=watchit_id)
+        try:
+            question_config = QuestionConfig.objects.get(pk=question_configuration_id)
+            serializer = serializers.QuestionUpdateModelSerializer(data=request.data)
+            if serializer.is_valid():
+                question_config = serializer.update(question_config, request.data)
+                return Response(serializers.QuestionConfigModelSerializer(question_config).data,
+                                status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except QuestionConfig.DoesNotExist:
+            raise ValidationError({'question_configuration_id': _('question config not found')})
+
+
 
 
 

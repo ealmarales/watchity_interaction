@@ -94,12 +94,11 @@ class Poll(Interaction):
         streaming (bool): Indicate if the poll is streaming or not.
 
     """
+    configuration = models.ForeignKey(PollConfig, on_delete=models.CASCADE)
+
     creation_date = models.DateTimeField()
     published = models.BooleanField(_('is published'))
     streaming = models.BooleanField(_('is streaming'))
-
-    privacy_mode = models.CharField(_('results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
-    multiple_answers = models.BooleanField(_('allow multiple answer response'))
 
 class Choice(models.Model):
     """
@@ -168,14 +167,8 @@ class Question(Interaction):
     """
     Model for Interation type Poll.
     """
-    allow_audience_create_questions = models.BooleanField(_('allow audience create questions'))
-    auto_publish = models.BooleanField(_('Auto publish create questions'))
-    allow_audience_vote_questions = models.BooleanField(_('audience can vote questions'))
-    allow_audience_vote_answers = models.BooleanField(_('audience can vote answers'))
-
-    privacy_mode = models.CharField(_('results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
-
-
+    configuration = models.ForeignKey(QuestionConfig, on_delete=models.CASCADE)
+    
 class QResponse(models.Model):
     """
     Model for Response of Question.
@@ -205,9 +198,19 @@ class EventConfig(models.Model):
     default_question_config(): Default configuration for questions in watchit.
 
     """
-    watchit_id = models.UUIDField('event identifier', primary_key=True)  # TODO: use UUID field
-    default_polls_config = models.ForeignKey(PollConfig, on_delete=models.CASCADE, related_name='default_polls_config')
-    default_questions_config = models.ForeignKey(QuestionConfig, on_delete=models.CASCADE, related_name='default_questions_config')
+    watchit_id = models.UUIDField('event identifier', primary_key=True)
+    default_polls_config = models.ForeignKey(PollConfig,
+                                             on_delete=models.SET_NULL,
+                                             related_name='default_polls_config',
+                                             null=True,
+                                             blank=True,
+                                             )
+    default_questions_config = models.ForeignKey(QuestionConfig,
+                                                 on_delete=models.SET_NULL,
+                                                 related_name='default_questions_config',
+                                                 null=True,
+                                                 blank=True,
+                                                 )
 
     def __str__(self):
         """ Unicode representation of EventConfig """
