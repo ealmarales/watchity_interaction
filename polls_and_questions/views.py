@@ -272,6 +272,31 @@ class ConfigQuestionManagerApiView(ConfigManager):
         except QuestionConfig.DoesNotExist:
             raise ValidationError({'question_configuration_id': _('question config not found')})
 
+class PollManagerApiView(ConfigManager):
+    """
+    Manage polls
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_class = serializers.PollModelSerializer
+
+    def get(self, request, watchit_id, poll_id, format=None):
+        """
+        Retrieve poll instance given a poll identifier.
+        Args:
+            watchit_id: The watchit identifier.
+            poll_id: The poll identifier.
+        Returns: Poll instance.
+        """
+        super()._validate_watchit_id(watchit_id=watchit_id)
+        try:
+            poll = Poll.objects.get(pk=poll_id)
+            serializer = self.serializer_class(poll)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Poll.DoesNotExist:
+            raise ValidationError({'poll_id': _('poll not found')})
+
 
 
 

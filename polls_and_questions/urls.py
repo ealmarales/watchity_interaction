@@ -6,7 +6,7 @@ from polls_and_questions import views
 
 urlpatterns = [
 
-    path('interaction/<uuid:watchit_id>/poll/configuration/', views.DefaultConfigPollManagerApiView.as_view()),
+    path('watchit/<uuid:watchit_id>/poll/configuration/', views.DefaultConfigPollManagerApiView.as_view()),
     path('watchit/<uuid:watchit_id>/qa/configuration/', views.DefaultConfigQuestionManagerApiView.as_view()),
 
     path('watchit/<uuid:watchit_id>/poll/configuration/<int:poll_configuration_id>/',
