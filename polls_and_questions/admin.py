@@ -1,12 +1,14 @@
 from django.contrib import admin
 
 from polls_and_questions.models import PollConfig, Choice, Poll, PResponse, QuestionConfig, \
-    Question, QResponse, EventConfig
-
+    Question, QResponse, EventConfig, User
 
 admin.site.register(PollConfig)
 admin.site.register(Choice)
 
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    pass
 
 @admin.register(Poll)
 class PollAdmin(admin.ModelAdmin):

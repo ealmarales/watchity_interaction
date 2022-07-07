@@ -8,14 +8,16 @@ class PollConfigModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PollConfig
         fields = '__all__'
-        read_only_flields = ('id', )
+        read_only_flields = ('id',)
+
 
 class PollConfigUpdateModelSerializer(serializers.ModelSerializer):
     """Serializer for update Poll Configurations"""
 
     class Meta:
         model = models.PollConfig
-        fields = ('privacy_mode', 'multiple_answers')
+        fields = ('answers_privacy', 'multiple_answers')
+
 
 class QuestionConfigModelSerializer(serializers.ModelSerializer):
     """Default Question Configuration Model Serializer"""
@@ -23,7 +25,8 @@ class QuestionConfigModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.QuestionConfig
         fields = '__all__'
-        read_only_flields = ('id', )
+        read_only_flields = ('id',)
+
 
 class QuestionUpdateModelSerializer(serializers.ModelSerializer):
     """Question Update Model Serializer"""
@@ -32,15 +35,63 @@ class QuestionUpdateModelSerializer(serializers.ModelSerializer):
         model = models.QuestionConfig
         exclude = ('id', 'enabled',)
 
+
 class PollModelSerializer(serializers.ModelSerializer):
     """
     Model serializer for Polls
     """
+    configuration = PollConfigModelSerializer()
+
     class Meta:
-        mmodel = models.Poll
-        fields = '__all__'
-        read_only_flields = ('id',)
+        model = models.Poll
+        creator = serializers.PrimaryKeyRelatedField(read_only=True)
+        fields = ('id',
+                  'creator',
+                  'watchit_uuid',
+                  'creator__id',
+                  'creator__username',
+                  'creator__scren_name',
+                  'creation_date',
+                  'published',
+                  'streaming',
+                  'configuration',
+                  )
+        read_only_fields = ('id',
+                            'watchit_uuid',
+                            'creator__id',
+                            'creator__username',
+                            'creator__scren_name',
+                            'creation_date',
+                            'published',
+                            'streaming',
+                            )
 
-
+# class PollCreateModelSerializer(serializers.ModelSerializer):
+#     """
+#     Model serializer for create polls
+#     """
+#     answers = serializers.StringRelatedField(many=True)
+#     configuration = PollConfigModelSerializer()
+#     class Meta:
+#         model = models.Poll
+#         fields = ('creator__username',
+#                   'creator__scren_name',
+#                   )
+#         # read_only_fields = ('id',
+#         #                     'watchit_uuid',
+#         #                     'creator_id',
+#         #                     'creator_username',
+#         #                     'creator_scren_name',
+#         #                     'creation_date',
+#         #                     'published',
+#         #                     'streaming',
+#         #                     )
+#
+#     def create(self, validated_data):
+#         answers_data = validated_data.pop('answers')
+#         poll = models.Poll.objects.create(**validated_data)
+#         for answer_data in answers_data:
+#             models.Choice.objects.create(poll=poll, **answer_data)
+#         return poll
 
 

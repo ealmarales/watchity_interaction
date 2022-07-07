@@ -8,34 +8,34 @@ RESULT_PRIVACY_CHOICES = (('EVERYONE', 'Everyone can see the results'),
                           )
 
 
+class User(models.Model):
+    username = models.CharField(_('username'), max_length=150, unique=True)
+    screen_name = models.CharField(_('screen name'), max_length=255)
+    email = models.EmailField(_('email'))
+
+    def __str__(self):
+        return self.screen_name
+
+
+
+
 class Interaction(models.Model):
     """
     Abstract data model for Interaction.
 
      Attributes:
-         watchit_id (UUID): The watchit identifier.
+         watchit_uuid (UUID): The watchit identifier.
          creator_id (UUID ): The creator identifier.
          question (str): The label for the interaction.
 
     """
-    watchit_id = models.UUIDField('event identifier')
-    creator_id = models.UUIDField('creator identifier')
+    watchit_uuid = models.UUIDField('event identifier')
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
     question = models.CharField(_('question'), max_length=256)
 
     class Meta:
         abstract = True
 
-    @property
-    def creator_username(self):
-        """ Return username of creator """
-        # TODO: obtener el username de una fuente o servicio externo
-        return 'creator name'
-
-    @property
-    def creator_scren_name(self):
-        """ Return the creator screen name """
-        # TODO: obtener el valor de una fuente o servicio externo
-        return 'scren_name'
 
     def __str__(self):
         return self.question
@@ -59,6 +59,7 @@ ANSWERING_TIME_LIMIT_CHOICES = (
     (75, '75'),
 )
 
+
 class PollConfig(models.Model):
     """
     Model for Configuration of interation type Poll.
@@ -72,13 +73,11 @@ class PollConfig(models.Model):
     enabled = models.BooleanField(_('Visibility in Event Room'))
     show_in_event_room = models.BooleanField(_('Show polls in the Event Room'))
 
-    privacy_mode = models.CharField(_('Defaults results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
+    answers_privacy = models.CharField(_('Defaults results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
     multiple_answers = models.BooleanField(_('allow multiple answer response'))
     answering_time_limit = models.PositiveIntegerField(choices=ANSWERING_TIME_LIMIT_CHOICES, default=0)
     allow_no_limitated_answering = models.BooleanField(_('allow answering with no time limitation'))
     answering_time_limit = models.PositiveIntegerField(choices=ANSWERING_TIME_LIMIT_CHOICES, default=5)
-
-
 
     def __str__(self):
         return "%s" % self.id
@@ -96,9 +95,10 @@ class Poll(Interaction):
     """
     configuration = models.ForeignKey(PollConfig, on_delete=models.CASCADE)
 
-    creation_date = models.DateTimeField()
-    published = models.BooleanField(_('is published'))
-    streaming = models.BooleanField(_('is streaming'))
+    creation_date = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(_('is published'), default=False)
+    streaming = models.BooleanField(_('is streaming'), default=False)
+
 
 class Choice(models.Model):
     """
@@ -111,15 +111,9 @@ class Choice(models.Model):
     """
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='answers')
     choice = models.CharField(_('choice'), max_length=256)
-    order = models.PositiveIntegerField(_('order'))
 
     def __str__(self):
         return self.choice
-
-    class Meta:
-        unique_together = ('poll', 'order')
-        ordering = ('order',)
-
 
 class PResponse(models.Model):
     """
@@ -157,18 +151,19 @@ class QuestionConfig(models.Model):
     allow_audience_vote_questions = models.BooleanField(_('audience can vote questions'))
     allow_audience_vote_answers = models.BooleanField(_('audience can vote answers'))
 
-    privacy_mode = models.CharField(_('results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
-
+    answers_privacy = models.CharField(_('results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
 
     def __str__(self):
         return "%s" % self.id
+
 
 class Question(Interaction):
     """
     Model for Interation type Poll.
     """
     configuration = models.ForeignKey(QuestionConfig, on_delete=models.CASCADE)
-    
+
+
 class QResponse(models.Model):
     """
     Model for Response of Question.
@@ -186,19 +181,18 @@ class QResponse(models.Model):
     def __str__(self):
         """ Unicode representation of Response to Question"""
 
-
         return self.response
 
 
 class EventConfig(models.Model):
     """ Model for configuration of events.
 
-    watchit_id (UUID): The watchit identifier.
+    watchit_uuid (UUID): The watchit identifier.
     default_poll_config(): Default configuration for polls in watchit.
     default_question_config(): Default configuration for questions in watchit.
 
     """
-    watchit_id = models.UUIDField('event identifier', primary_key=True)
+    watchit_uuid = models.UUIDField('event identifier', primary_key=True)
     default_polls_config = models.ForeignKey(PollConfig,
                                              on_delete=models.SET_NULL,
                                              related_name='default_polls_config',
@@ -214,8 +208,4 @@ class EventConfig(models.Model):
 
     def __str__(self):
         """ Unicode representation of EventConfig """
-        return "%s" % self.watchit_id
-
-
-
-
+        return "%s" % self.watchit_uuid
