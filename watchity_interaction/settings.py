@@ -43,15 +43,18 @@ INSTALLED_APPS = [
 	#3rd Apps
     'rest_framework',
 	'drf_yasg',
-	#Local Apps
+    'corsheaders', # enable COR
+
+    #Local Apps
     'polls_and_questions',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', # enable COR
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware', #  desability CSRFTOKEN
+    # 'django.middleware.csrf.CsrfViewMiddleware', #  desability CSRFTOKEN
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -137,3 +140,6 @@ MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+ALLOWED_HOSTS=['*']
+CORS_ORIGIN_ALLOW_ALL = True
