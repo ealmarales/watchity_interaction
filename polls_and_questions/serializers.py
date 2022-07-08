@@ -11,14 +11,6 @@ class PollConfigModelSerializer(serializers.ModelSerializer):
         read_only_flields = ('id',)
 
 
-class PollConfigUpdateModelSerializer(serializers.ModelSerializer):
-    """Serializer for update Poll Configurations"""
-
-    class Meta:
-        model = models.PollConfig
-        fields = ('answers_privacy', 'multiple_answers')
-
-
 class QuestionConfigModelSerializer(serializers.ModelSerializer):
     """Default Question Configuration Model Serializer"""
 
@@ -26,14 +18,6 @@ class QuestionConfigModelSerializer(serializers.ModelSerializer):
         model = models.QuestionConfig
         fields = '__all__'
         read_only_flields = ('id',)
-
-
-class QuestionUpdateModelSerializer(serializers.ModelSerializer):
-    """Question Update Model Serializer"""
-
-    class Meta:
-        model = models.QuestionConfig
-        exclude = ('id', 'enabled',)
 
 
 class PollModelSerializer(serializers.ModelSerializer):
