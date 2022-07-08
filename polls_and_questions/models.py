@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 RESULT_PRIVACY_CHOICES = (('EVERYONE', 'Everyone can see the results'),
                           ('CREATOR_AND_SPEAKERS', 'The creator and the speakers can see the results'),
-                          ('CREATOR', 'Only the creator can see the results'),
+                          ('ONLY_CREATOR', 'Only the creator can see the results'),
                           )
 
 
