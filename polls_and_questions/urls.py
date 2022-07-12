@@ -10,9 +10,6 @@ urlpatterns = [
     path('watchit/<uuid:watchit_uuid>/qa/configuration/', views.DefaultConfigQuestionManagerApiView.as_view()),
 
     # path('watchit/<uuid:watchit_uuid>/poll/<int:poll_id>/', views.PollManagerApiView.as_view()),
-
-
-
-
+    path('watchit/<uuid:watchit_uuid>/question/<int:question_id>/', views.QuestionManagerApiView.as_view()),
 
 ]

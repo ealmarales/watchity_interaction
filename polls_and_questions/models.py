@@ -7,16 +7,22 @@ RESULT_PRIVACY_CHOICES = (('EVERYONE', 'Everyone can see the results'),
                           ('ONLY_CREATOR', 'Only the creator can see the results'),
                           )
 
+EXTERNAL_USERS_CHOICES = (
+    ('SYSTEM', _('Sistem user')), # users with accounts in external API
+    ('PARTICIPANT', _('Participant user')),  # users logged with email in external API
 
+)
 class User(models.Model):
+    """
+    Users from external API
+    """
     username = models.CharField(_('username'), max_length=150, unique=True)
     screen_name = models.CharField(_('screen name'), max_length=255)
     email = models.EmailField(_('email'))
+    type = models.CharField(_('user type'), max_length=20, choices=EXTERNAL_USERS_CHOICES)
 
     def __str__(self):
-        return self.screen_name
-
-
+        return self.username
 
 
 class Interaction(models.Model):
@@ -32,6 +38,10 @@ class Interaction(models.Model):
     watchit_uuid = models.UUIDField('event identifier')
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     question = models.CharField(_('question'), max_length=256)
+
+    creation_date = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(_('is published'), default=False)
+    streaming = models.BooleanField(_('is streaming'), default=False)
 
     class Meta:
         abstract = True
@@ -66,15 +76,15 @@ class PollConfig(models.Model):
 
     Attributes:
         enabled (bool): Indicate if Poll component is enabled or not.
-        multiple_answers (bool): Indicate if multiple answer response will be allowed or not.
+        multiple_answers (bool): Indicate if multiple answer answer will be allowed or not.
         answering_time_limit (int): Time limit for answering.
 
     """
-    enabled = models.BooleanField(_('Visibility in Event Room'))
+    enabled = models.BooleanField(_('Visibility in Event Room'), default=True)
     show_in_event_room = models.BooleanField(_('Show polls in the Event Room'))
 
     answers_privacy = models.CharField(_('Defaults results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
-    multiple_answers = models.BooleanField(_('allow multiple answer response'))
+    multiple_answers = models.BooleanField(_('allow multiple answer answer'))
     answering_time_limit = models.PositiveIntegerField(choices=ANSWERING_TIME_LIMIT_CHOICES, default=0)
     allow_no_limitated_answering = models.BooleanField(_('allow answering with no time limitation'))
     answering_time_limit = models.PositiveIntegerField(choices=ANSWERING_TIME_LIMIT_CHOICES, default=5)
@@ -95,9 +105,7 @@ class Poll(Interaction):
     """
     configuration = models.ForeignKey(PollConfig, on_delete=models.CASCADE)
 
-    creation_date = models.DateTimeField(auto_now_add=True)
-    published = models.BooleanField(_('is published'), default=False)
-    streaming = models.BooleanField(_('is streaming'), default=False)
+
 
 
 class Choice(models.Model):
@@ -115,22 +123,23 @@ class Choice(models.Model):
     def __str__(self):
         return self.choice
 
-class PResponse(models.Model):
-    """
-    Model for Response of Poll
 
-    poll (Poll): Poll the one that the response belongs to.
-    selected_choice (list[Choice]): Choices selected in the response.
+class PAnswer(models.Model):
+    """
+    Model for Answer of Poll
+
+    poll (Poll): Poll the one that the answer belongs to.
+    selected_choice (list[Choice]): Choices selected in the answer.
     participant_id (UUID): Identifier of the participant that responds.
-    date (Date): Date of the response.
+    creation_date (Date): Date of the answer.
     """
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
     selected_choice = models.ManyToManyField(Choice)
     participant_id = models.UUIDField(_('participant identificator'))
-    date = models.DateTimeField(_('date'), auto_now=True)
+    creation_date = models.DateTimeField(_('creation_date'), auto_now=True)
 
     class Meta:
-        verbose_name = _('poll responses')
+        verbose_name = _('poll answer')
 
 
 class QuestionConfig(models.Model):
@@ -144,12 +153,12 @@ class QuestionConfig(models.Model):
     allow_audience_vote_answers (bool): Indicate if audience can vote answers or not.
 
     """
-    enabled = models.BooleanField(_('Enable the Q&A componet'))
+    enabled = models.BooleanField(_('Enable the Q&A componet'), default=True)
 
-    allow_audience_create_questions = models.BooleanField(_('allow audience create questions'))
-    auto_publish = models.BooleanField(_('Auto publish create questions'))
-    allow_audience_vote_questions = models.BooleanField(_('audience can vote questions'))
-    allow_audience_vote_answers = models.BooleanField(_('audience can vote answers'))
+    allow_audience_create_questions = models.BooleanField(_('allow audience create questions'), default=True)
+    auto_publish = models.BooleanField(_('Auto publish create questions'), default=True)
+    allow_audience_vote_questions = models.BooleanField(_('audience can vote questions'), default=True)
+    allow_audience_vote_answers = models.BooleanField(_('audience can vote answers'), default=True)
 
     answers_privacy = models.CharField(_('results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
 
@@ -159,30 +168,70 @@ class QuestionConfig(models.Model):
 
 class Question(Interaction):
     """
-    Model for Interation type Poll.
+    Model for Interaction type Question.
     """
     configuration = models.ForeignKey(QuestionConfig, on_delete=models.CASCADE)
 
+    @property
+    def votes_count(self):
+        """ Retrieve count of votes for the question  """
+        return self.votes.count()
 
-class QResponse(models.Model):
+class QAnswer(models.Model):
     """
-    Model for Response of Question.
+    Model for Answer of Question.
 
     
     """
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    participant_id = models.UUIDField(_('participant id'))
-    response = models.CharField(_('response'), max_length=256)
-    date = models.DateTimeField(_('date'), auto_now=True)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    participant = models.ForeignKey(User, on_delete=models.CASCADE)
+    answer = models.CharField(_('answer'), max_length=256)
+    creation_date = models.DateTimeField(_('creation_date'), auto_now=True)
 
     class Meta:
-        verbose_name = _('question responses')
+        verbose_name = _('question answer')
 
     def __str__(self):
-        """ Unicode representation of Response to Question"""
+        """ Unicode representation of Response to Question """
+        return self.answer
 
-        return self.response
+    @property
+    def votes_count(self):
+        """ Retrieve count of votes for the question  """
+        return self.votes.count()
 
+
+class AbstractVote(models.Model):
+    """ Abstract model for votes"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    creation_date = models.DateTimeField(_('creation_date'), auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class QVote(AbstractVote):
+    """ Model for question vote """
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='votes')
+
+    def __str__(self):
+        return self.question.__str__()
+
+    class Meta:
+        verbose_name = _('question vote')
+        unique_together = ('question', 'user')
+
+
+class QAVote(AbstractVote):
+    """ Model for question answer vote """
+    answer = models.ForeignKey(QAnswer, on_delete=models.CASCADE, related_name='votes')
+
+    class Meta:
+        verbose_name = _('answer vote')
+        unique_together = ('answer', 'user')
+
+    def __str__(self):
+        return self.answer.__str__()
 
 class EventConfig(models.Model):
     """ Model for configuration of events.

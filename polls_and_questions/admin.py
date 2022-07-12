@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from polls_and_questions.models import PollConfig, Choice, Poll, PResponse, QuestionConfig, \
-    Question, QResponse, EventConfig, User
+from polls_and_questions.models import PollConfig, Choice, Poll, PAnswer, QuestionConfig, \
+    Question, QAnswer, EventConfig, User, QVote, QAVote
 
 admin.site.register(PollConfig)
 admin.site.register(Choice)
@@ -19,7 +19,7 @@ class PollAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
 
 
-@admin.register(PResponse)
+@admin.register(PAnswer)
 class PResponseAdmin(admin.ModelAdmin):
     filter_horizontal = ('selected_choice',)
 
@@ -33,14 +33,22 @@ class DefaultQuestionConfigAdmin(admin.ModelAdmin):
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     class QResponseInline(admin.StackedInline):
-        model = QResponse
+        model = QAnswer
         extra = 1
     inlines = [QResponseInline]
 
-@admin.register(QResponse)
+@admin.register(QAnswer)
 class QResponseAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(EventConfig)
 class EventConfigAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(QVote)
+class QAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(QAVote)
+class QAAdmin(admin.ModelAdmin):
     pass
