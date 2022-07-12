@@ -58,6 +58,13 @@ class UserModelSerializar(serializers.ModelSerializer):
         model = models.User
         fields = '__all__'
 
+class QAnswerModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QAnswer
+        fields = ('answer', )
+
+
+
 
 class QAnswerDetailModelSerializer(serializers.ModelSerializer):
     participant = UserModelSerializar()
@@ -74,7 +81,11 @@ class QAnswerDetailModelSerializer(serializers.ModelSerializer):
 
 
 class QAVoteModelSerializer(serializers.ModelSerializer):
-    """ Serializer for votes to """
+    """ Serializer for votes to answers to questions """
+    class Meta:
+        model = models.QAVote
+        fields = '__all__'
+
 
 
 class QuestionDetailModelSerializer(serializers.ModelSerializer):
@@ -133,3 +144,48 @@ class QuestionModelSerializer(serializers.ModelSerializer):
             self.fields['configuration'].update(instance=question_config, validated_data=validated_data)
         super().update(instance, validated_data)
         return instance
+
+
+class QuestionCreateModelSerializer(serializers.ModelSerializer):
+    """
+    Serializer for questions
+    """
+    configuration = CustomQuestionConfig(allow_null=True)
+
+    class Meta:
+        model = models.Question
+        fields = ('question',
+                  'configuration',
+                  )
+
+    def create(self, watchit_uuid, creator, validated_data):
+        configuration_data = validated_data.pop('configuration', None)
+        configuration = None
+        if configuration_data:
+            configuration = self.fields['configuration'].create(validated_data=configuration_data)
+        else:
+            event_config = models.EventConfig.objects.get(watchit_uuid=watchit_uuid)
+            default_event_configuration = event_config.default_questions_config
+            if default_event_configuration:
+                configuration = models.QuestionConfig.objects.create(
+                    allow_audience_create_questions=default_event_configuration.allow_audience_create_questions,
+                    allow_audience_vote_questions=default_event_configuration.allow_audience_vote_questions,
+                    allow_audience_vote_answers=default_event_configuration.allow_audience_vote_answers,
+                    answers_privacy=default_event_configuration.answers_privacy,
+                )
+            else:
+                raise ValueError('define a default question configuration for this event or a custom question configuration for this question')
+        question = models.Question.objects.create(
+            watchit_uuid=watchit_uuid,
+            creator=creator,
+            question=validated_data.get('question', None),
+            published=configuration.auto_publish,
+            configuration=configuration
+        )
+        return question
+
+
+
+
+
+

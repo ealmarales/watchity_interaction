@@ -1,15 +1,17 @@
 from uuid import UUID
 
 import requests
+from django.db import IntegrityError
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status
+from rest_framework import status, viewsets, generics
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound, NotAuthenticated
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from polls_and_questions import serializers, services
-from polls_and_questions.models import EventConfig, Poll, Question, User
+from polls_and_questions.models import EventConfig, Poll, Question, User, QAnswer, QAVote
 
 from django.utils.translation import gettext_lazy as _
 
@@ -232,8 +234,10 @@ class PollManagerApiView(ConfigManager):
     #
     #
 
+
 class QuestionManagerApiView(ConfigManager):
-    """ Manage questions
+    """
+    Manage created questions
     """
 
     def __init__(self, *args, **kwargs):
@@ -299,6 +303,127 @@ class QuestionManagerApiView(ConfigManager):
             return Response(status=status.HTTP_200_OK)
         except Question.DoesNotExist:
             raise NotFound({'question_id': _('question not found')})
+class QuestionCreatorManager(ConfigManager):
+    """
+    Manage Questions creation
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_class = serializers.QuestionCreateModelSerializer
+
+
+
+    @swagger_auto_schema(request_body=serializers.QuestionCreateModelSerializer)
+    def post(self, request, watchit_uuid, format=None):
+        """
+        Create a  question in an event.
+        """
+        self._validate_watchit_uuid(watchit_uuid=watchit_uuid)
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            token = super()._get_token(request)
+            if token:
+                try:
+                    response = get_user_data(auth_token=token)
+                    if response.status_code == 200:
+                        user_data = response.json()
+                        creator, create = User.objects.get_or_create(username=user_data.get('username'),
+                                                                     screen_name=user_data.get('screen_name'),
+                                                                     email=user_data.get('email'),
+                                                                     type='SYSTEM',
+                                                                     )
+                        question = serializer.create(watchit_uuid=watchit_uuid,
+                                                   creator=creator,
+                                                   validated_data=request.data,
+                                                   )
+                        data = serializers.QuestionDetailModelSerializer(question).data
+                        return Response(data, status=status.HTTP_200_OK)
+                    else:
+                        return Response(status=response.status_code)
+                except requests.exceptions.ConnectionError as error:
+                    return Response(error.__str__(), status=status.HTTP_404_NOT_FOUND)
+            raise NotAuthenticated()
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class QAnswerManagerApiView(ConfigManager):
+    """
+    Manage created answers for questions
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_class = serializers.QAnswerDetailModelSerializer
+
+    def get_object(self, watchit_uuid: UUID, question_id: int, answer_id: int):
+        super()._validate_watchit_uuid(watchit_uuid=watchit_uuid)
+
+        answers = QAnswer.objects.filter(question_id=question_id).filter(id=answer_id)
+        if answers:
+            return answers[0]
+        else:
+            raise NotFound({'answer_id': _('answer not found')})
+
+    def get(self, request, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
+        """
+        Retrieve answer to question.
+        """
+        answer = self.get_object(watchit_uuid=watchit_uuid, question_id=question_id, answer_id=answer_id)
+        data = self.serializer_class(answer).data
+        return Response(data, status=status.HTTP_200_OK)
+
+    def delete(self, request, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
+        """
+        Remove an answer to question.
+        """
+        answer = self.get_object(watchit_uuid=watchit_uuid, question_id=question_id, answer_id=answer_id)
+        data = self.serializer_class(answer).data
+        answer.delete()
+        return Response(data, status=status.HTTP_200_OK)
+
+
+    def patch(self, request, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
+        """
+        Vote / Remove Vote for answer to question.
+        """
+        answer = self.get_object(watchit_uuid=watchit_uuid, question_id=question_id, answer_id=answer_id)
+
+        token = super()._get_token(request)
+        if token:
+            try:
+                response = get_user_data(auth_token=token)
+                if response.status_code == 200:
+                    user_data = response.json()
+                    creator, create = User.objects.get_or_create(username=user_data.get('username'),
+                                                                 screen_name=user_data.get('screen_name'),
+                                                                 email=user_data.get('email'),
+                                                                 type='SYSTEM',
+                                                                 )
+                    vote, created = QAVote.objects.get_or_create(answer=answer, user=creator)
+                    if not created:
+                        vote.delete()
+                    data = {'voted': created}
+                    return Response(data, status=status.HTTP_200_OK)
+                else:
+                    return Response(status=response.status_code)
+            except requests.exceptions.ConnectionError as error:
+                return Response(error.__str__(), status=status.HTTP_404_NOT_FOUND)
+        raise NotAuthenticated()
+
+    # @swagger_auto_schema(request_body=serializers.QAnswerModelSerializer)
+    # def put(self, request, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
+    #     """
+    #     Update an answer to question.
+    #     """
+    #     answer = self.get_object(watchit_uuid=watchit_uuid, question_id=question_id, answer_id=answer_id)
+    #     serializer = serializers.QAnswerModelSerializer(request.data)
+    #     if serializer.is_valid():
+    #         serializer.update(instance=answer, validated_data=request.data)
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     else:
+    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
