@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.relations import PrimaryKeyRelatedField
 
 from polls_and_questions import models
@@ -166,17 +167,20 @@ class QuestionCreateModelSerializer(serializers.ModelSerializer):
         if configuration_data:
             configuration = self.fields['configuration'].create(validated_data=configuration_data)
         else:
-            event_config = models.EventConfig.objects.get(watchit_uuid=watchit_uuid)
-            default_event_configuration = event_config.default_questions_config
-            if default_event_configuration:
+
+            try:
+                event_config = models.EventConfig.objects.get(watchit_uuid=watchit_uuid)
+                default_event_configuration = event_config.default_questions_config
                 configuration = models.QuestionConfig.objects.create(
                     allow_audience_create_questions=default_event_configuration.allow_audience_create_questions,
                     allow_audience_vote_questions=default_event_configuration.allow_audience_vote_questions,
                     allow_audience_vote_answers=default_event_configuration.allow_audience_vote_answers,
                     answers_privacy=default_event_configuration.answers_privacy,
                 )
-            else:
-                raise ValueError('define a default question configuration for this event or a custom question configuration for this question')
+            except models.EventConfig.DoesNotExist:
+                raise ValidationError(
+                    'define a default question configuration for this event or a custom question configuration for '
+                    'this question')
         question = models.Question.objects.create(
             watchit_uuid=watchit_uuid,
             creator=creator,
