@@ -167,31 +167,43 @@ class QuestionCreateModelSerializer(serializers.ModelSerializer):
         if configuration_data:
             configuration = self.fields['configuration'].create(validated_data=configuration_data)
         else:
+<<<<<<< .merge_file_a06016
+=======
 <<<<<<< HEAD
+>>>>>>> .merge_file_a11444
 
             try:
                 event_config = models.EventConfig.objects.get(watchit_uuid=watchit_uuid)
                 default_event_configuration = event_config.default_questions_config
+<<<<<<< .merge_file_a06016
+=======
 =======
             event_config = models.EventConfig.objects.get(watchit_uuid=watchit_uuid)
             default_event_configuration = event_config.default_questions_config
             if default_event_configuration:
 >>>>>>> 73a2b2429a4fe99da74f8e648511ef80038fe01c
+>>>>>>> .merge_file_a11444
                 configuration = models.QuestionConfig.objects.create(
                     allow_audience_create_questions=default_event_configuration.allow_audience_create_questions,
                     allow_audience_vote_questions=default_event_configuration.allow_audience_vote_questions,
                     allow_audience_vote_answers=default_event_configuration.allow_audience_vote_answers,
                     answers_privacy=default_event_configuration.answers_privacy,
                 )
+<<<<<<< .merge_file_a06016
+=======
 <<<<<<< HEAD
+>>>>>>> .merge_file_a11444
             except models.EventConfig.DoesNotExist:
                 raise ValidationError(
                     'define a default question configuration for this event or a custom question configuration for '
                     'this question')
+<<<<<<< .merge_file_a06016
+=======
 =======
             else:
                 raise ValueError('define a default question configuration for this event or a custom question configuration for this question')
 >>>>>>> 73a2b2429a4fe99da74f8e648511ef80038fe01c
+>>>>>>> .merge_file_a11444
         question = models.Question.objects.create(
             watchit_uuid=watchit_uuid,
             creator=creator,
