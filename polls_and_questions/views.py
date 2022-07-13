@@ -424,7 +424,6 @@ class QAnswerManagerApiView(ConfigManager):
     #     else:
     #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-<<<<<<< HEAD
 class QAnswerCreatorManager(ConfigManager):
     """
     Manage Answer to Questions creation
@@ -472,8 +471,7 @@ class QAnswerCreatorManager(ConfigManager):
                     return Response(error.__str__(), status=status.HTTP_404_NOT_FOUND)
             raise NotAuthenticated()
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-=======
->>>>>>> 73a2b2429a4fe99da74f8e648511ef80038fe01c
+
 
 
 
