@@ -167,20 +167,31 @@ class QuestionCreateModelSerializer(serializers.ModelSerializer):
         if configuration_data:
             configuration = self.fields['configuration'].create(validated_data=configuration_data)
         else:
+<<<<<<< HEAD
 
             try:
                 event_config = models.EventConfig.objects.get(watchit_uuid=watchit_uuid)
                 default_event_configuration = event_config.default_questions_config
+=======
+            event_config = models.EventConfig.objects.get(watchit_uuid=watchit_uuid)
+            default_event_configuration = event_config.default_questions_config
+            if default_event_configuration:
+>>>>>>> 73a2b2429a4fe99da74f8e648511ef80038fe01c
                 configuration = models.QuestionConfig.objects.create(
                     allow_audience_create_questions=default_event_configuration.allow_audience_create_questions,
                     allow_audience_vote_questions=default_event_configuration.allow_audience_vote_questions,
                     allow_audience_vote_answers=default_event_configuration.allow_audience_vote_answers,
                     answers_privacy=default_event_configuration.answers_privacy,
                 )
+<<<<<<< HEAD
             except models.EventConfig.DoesNotExist:
                 raise ValidationError(
                     'define a default question configuration for this event or a custom question configuration for '
                     'this question')
+=======
+            else:
+                raise ValueError('define a default question configuration for this event or a custom question configuration for this question')
+>>>>>>> 73a2b2429a4fe99da74f8e648511ef80038fe01c
         question = models.Question.objects.create(
             watchit_uuid=watchit_uuid,
             creator=creator,
