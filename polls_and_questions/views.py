@@ -472,6 +472,18 @@ class QAnswerCreatorManager(ConfigManager):
             raise NotAuthenticated()
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class QuestionList(generics.ListAPIView):
+    serializer_class = serializers.QuestionDetailModelSerializer
+    queryset = Question.objects.all()
+
+
+
+    def get_queryset(self):
+        return super().get_queryset().filter(watchit_uuid=self.kwargs.get('watchit_uuid'))
+
+
+
+
 
 
 

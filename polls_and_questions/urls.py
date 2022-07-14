@@ -20,4 +20,7 @@ urlpatterns = [
 
     path('watchit/<uuid:watchit_uuid>/question/<int:question_id>/answers/', views.QAnswerCreatorManager.as_view()),
 
+    #----------
+    path('watchit/<uuid:watchit_uuid>/questions/', views.QuestionList.as_view()),
+
 ]

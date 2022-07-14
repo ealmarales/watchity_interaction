@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
     #Local Apps
     'polls_and_questions',
+    'polls',
 ]
 
 MIDDLEWARE = [
@@ -142,4 +143,9 @@ MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ALLOWED_HOSTS=['*']
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = TrueCORS_ORIGIN_ALLOW_ALL = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10
+}
