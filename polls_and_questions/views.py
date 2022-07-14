@@ -155,8 +155,7 @@ class DefaultConfigQuestionManagerApiView(ConfigManager):
             event, create = EventConfig.objects.get_or_create(watchit_uuid=watchit_uuid)
             default_question_config = event.default_questions_config
             if default_question_config:
-                # if event is not created and have a default_questions_config; old default_questions_config is deleted.
-                default_question_config.delete()
+                raise ValidationError(_('this event have default question config'))
             default_question_config = serializer.save()
             event.default_questions_config = default_question_config
             event.save()
@@ -181,7 +180,7 @@ class DefaultConfigQuestionManagerApiView(ConfigManager):
                 event.save()
                 data = self.serializer_class(default_question_config).data
                 return Response(data=data, status=status.HTTP_200_OK)
-            raise NotFound(_('event config not found'))
+            raise NotFound(_('default question configuration not found'))
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

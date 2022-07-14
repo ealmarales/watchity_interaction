@@ -50,3 +50,5 @@ class PollCreatorSerializer(serializers.ModelSerializer):
             fields = ('question',
                       'configuration',
                       )
+
+# TODO: Verificar que solo se puede asignar una configuracion por defecto de encuesta y prefunta
