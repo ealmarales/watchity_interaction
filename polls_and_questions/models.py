@@ -72,13 +72,10 @@ class PollConfig(models.Model):
 
     """
     enabled = models.BooleanField(_('Visibility in Event Room'), default=True)
-    show_in_event_room = models.BooleanField(_('Show polls in the Event Room'))
-    # TODO: Eliminar show_in_event_room
 
     answers_privacy = models.CharField(_('Defaults results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
-    multiple_answers = models.BooleanField(_('allow multiple answer answer'))
-    answering_time_limit = models.PositiveIntegerField(choices=ANSWERING_TIME_LIMIT_CHOICES, default=0)
-    allow_no_limitated_answering = models.BooleanField(_('allow answering with no time limitation'))
+    multiple_answers = models.BooleanField(_('allow multiple answer answer'), default=True)
+    allow_no_limited_answering = models.BooleanField(_('allow answering with no time limitation'), default=True)
     answering_time_limit = models.PositiveIntegerField(choices=ANSWERING_TIME_LIMIT_CHOICES, default=5)
 
     def __str__(self):
@@ -127,7 +124,7 @@ class PAnswer(models.Model):
     """
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
     selected_choice = models.ManyToManyField(Choice)
-    participant_id = models.UUIDField(_('participant identifier'))
+    creator = models.ForeignKey(InteractionUser, on_delete=models.CASCADE, )
     creation_date = models.DateTimeField(_('creation_date'), auto_now=True)
 
     class Meta:

@@ -18,7 +18,7 @@ from users.models import InteractionUser
 
 class PollViewSet(mixins.ListModelMixin,
                   mixins.RetrieveModelMixin,
-                  # mixins.CreateModelMixin,
+                  mixins.CreateModelMixin,
                   # mixins.UpdateModelMixin,
                   mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
@@ -40,35 +40,35 @@ class PollViewSet(mixins.ListModelMixin,
         """Remove a poll """
         return super().destroy(request, *args, **kwargs)
 
-    # @swagger_auto_schema(request_body=serializers.QuestionCreateModelSerializer)
-    # def create(self, request, *args, **kwargs):
-    #     """ Create a Question """
-    #
-    #     serializer = serializers.QuestionCreateModelSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         creator = InteractionUser.objects.get(user_id=request.user.id)
-    #         question = serializer.create(watchit_uuid=self.kwargs.get('watchit_uuid'),
-    #                                      creator=creator,
-    #                                      validated_data=request.data,
-    #                                      )
-    #         data = serializers.QuestionDetailModelSerializer(question, context={'request': request}).data
-    #         return Response(data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #
-    # @swagger_auto_schema(request_body=serializers.QuestionUpdateModelSerializer)
-    # def update(self, request, *args, **kwargs):
-    #     """ Update a Question """
-    #
-    #     question = self.get_object()
-    #     serializer = serializers.QuestionUpdateModelSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.update(instance=question,
-    #                           validated_data=request.data,
-    #                           )
-    #         data = serializers.QuestionDetailModelSerializer(question, context={'request': request}).data
-    #         return Response(data, status=status.HTTP_200_OK)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #
+    @swagger_auto_schema(request_body=serializers.PollCreateModelSerializer)
+    def create(self, request, *args, **kwargs):
+        """ Create a Poll """
+
+        serializer = serializers.PollCreateModelSerializer(data=request.data)
+        if serializer.is_valid():
+            creator = InteractionUser.objects.get(user_id=request.user.id)
+            poll = serializer.create(watchit_uuid=self.kwargs.get('watchit_uuid'),
+                                         creator=creator,
+                                         validated_data=request.data,
+                                         )
+            data = serializers.PollDetailModelSerializer(poll, context={'request': request}).data
+            return Response(data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=serializers.PollUpdateModelSerializer)
+    def update(self, request, *args, **kwargs):
+        """ Update a Poll """
+
+        poll = self.get_object()
+        serializer = serializers.PollUpdateModelSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.update(instance=poll,
+                              validated_data=request.data,
+                              )
+            data = serializers.PollDetailModelSerializer(poll, context={'request': request}).data
+            return Response(data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     # @swagger_auto_schema(request_body=serializers.ResponseVoteSerializer)
     # @action(detail=True, methods=['patch'])
     # def vote_unvote(self, request, *args, **kwargs):

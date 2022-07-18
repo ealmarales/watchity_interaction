@@ -46,10 +46,11 @@ INSTALLED_APPS = [
     'corsheaders', # enable COR
 
     #Local Apps
-    'users',
     'polls_and_questions',
     'polls',
     'questions',
+    'users',
+
 ]
 
 MIDDLEWARE = [
