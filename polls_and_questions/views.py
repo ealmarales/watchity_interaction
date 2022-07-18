@@ -7,21 +7,26 @@ from rest_framework import status, viewsets, generics
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound, NotAuthenticated
 from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from polls_and_questions import serializers, services
-from polls_and_questions.models import EventConfig, Poll, Question, User, QAnswer, QAVote
+from polls_and_questions.models import EventConfig, Poll, Question, QAnswer, QAVote
 
 from django.utils.translation import gettext_lazy as _
 
 from polls_and_questions.services import get_user_data
+from users import authentication
 
 
 class ConfigManager(APIView):
     """ Abstract class for manage Event Configurations """
 
     serializer_class = None
+    authentication_classes = (authentication.ExternTokenAuthentication, )
+    permission_classes = (IsAuthenticated,)
+
 
     @staticmethod
     def _validate_watchit_uuid(watchit_uuid: UUID):
@@ -250,7 +255,7 @@ class QuestionManagerApiView(ConfigManager):
         super()._validate_watchit_uuid(watchit_uuid=watchit_uuid)
         try:
             question = Question.objects.get(pk=question_id)
-            serializer = self.serializer_class(question)
+            serializer = self.serializer_class(data=question, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Question.DoesNotExist:
             raise NotFound({'question_id': _('question not found')})
@@ -457,7 +462,7 @@ class QAnswerCreatorManager(ConfigManager):
                             question = Question.objects.get(id=question_id)
                             # TODO: Verificar si se permite multiples respuestas y si delegar responsabilidad de guardar al serializer
                             answer = QAnswer.objects.create(question=question,
-                                                            participant=creator,
+                                                            creator=creator,
                                                             answer=request.data.get('answer', ''),
                                                             )
                             data = serializers.QAnswerDetailModelSerializer(answer).data

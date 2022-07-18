@@ -1,54 +1,28 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 
 from polls_and_questions import models
-from polls_and_questions.models import User, QAnswer
-from polls_and_questions.serializers import UserModelSerializar, PollConfigModelSerializer
+from polls_and_questions.serializers import PollConfigModelSerializer
+from users.models import InteractionUser
+from users.serializers import InteractionUserSerializer
 
+class PollDetailModelSerializer(serializers.ModelSerializer):
 
-class PAnswerDetailModelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.PAnswer
-        fields = '__all__'
-        read_only_flields = ('id',)
-
-class ChoiceDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Choice
-        # fields = '__all__'
-        exclude = ('poll', )
-
-
-class PollDetailSerializer(serializers.ModelSerializer):
-    """Serializer to show polls"""
+    creator = InteractionUserSerializer()
     configuration = PollConfigModelSerializer()
-    creator = UserModelSerializar(read_only=True)
-    answers = StringRelatedField(many=True)
-
+    answers = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = models.Poll
-        # fields = '__all__'
         fields = ('id',
                   'creator',
-                  'configuration',
                   'creation_date',
                   'question',
                   'answers',
+                  'creation_date',
                   'published',
                   'streaming',
+                  'configuration',
                   )
-        read_only_flields = ('id',)
+        # exclude = ('question', )
 
-class PollCreatorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Poll
-
-        class Meta:
-            model = models.Question
-            fields = ('question',
-                      'configuration',
-                      )
-
-# TODO: Verificar que solo se puede asignar una configuracion por defecto de encuesta y prefunta

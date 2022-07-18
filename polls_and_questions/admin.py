@@ -1,14 +1,11 @@
 from django.contrib import admin
 
 from polls_and_questions.models import PollConfig, Choice, Poll, PAnswer, QuestionConfig, \
-    Question, QAnswer, EventConfig, User, QVote, QAVote
+    Question, QAnswer, EventConfig, QVote, QAVote
 
 admin.site.register(PollConfig)
 admin.site.register(Choice)
 
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    pass
 
 @admin.register(Poll)
 class PollAdmin(admin.ModelAdmin):

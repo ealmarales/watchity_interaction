@@ -42,8 +42,9 @@ urlpatterns = [
 
     path('api/', include('polls_and_questions.urls')),
     path('api/', include(('polls.urls', 'polls'), namespace='polls')),
+    path('api/', include(('questions.urls', 'questions'), namespace='questions')),
 
-	path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redocs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

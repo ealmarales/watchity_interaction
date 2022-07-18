@@ -2,68 +2,13 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from polls_and_questions import models
+from polls_and_questions.serializers import QuestionConfigModelSerializer
 from users.models import InteractionUser
 from users.serializers import InteractionUserSerializer
 
-
-class PollConfigModelSerializer(serializers.ModelSerializer):
-    """Default Poll Configuration Model Serializer"""
-
-    class Meta:
-        model = models.PollConfig
-        fields = '__all__'
-        read_only_flields = ('id',)
-
-
-class QuestionConfigModelSerializer(serializers.ModelSerializer):
-    """Default Question Configuration Model Serializer"""
-
-    class Meta:
-        model = models.QuestionConfig
-        fields = '__all__'
-        read_only_flields = ('id',)
-
-
-# class PollModelSerializer(serializers.ModelSerializer):
-#     """
-#     Model serializer for Polls
-#     """
-#     configuration = PollConfigModelSerializer()
-#
-#     class Meta:
-#         model = models.Poll
-#         creator = serializers.PrimaryKeyRelatedField(read_only=True)
-#         fields = ('id',
-#                   'creator',
-#                   'watchit_uuid',
-#                   'creator__id',
-#                   'creator__username',
-#                   'creator__scren_name',
-#                   'creation_date',
-#                   'published',
-#                   'streaming',
-#                   'configuration',
-#                   )
-#         read_only_fields = ('id',
-#                             'watchit_uuid',
-#                             'creator__id',
-#                             'creator__username',
-#                             'creator__scren_name',
-#                             'creation_date',
-#                             'published',
-#                             'streaming',
-#                             )
-
-
-class QAnswerModelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.QAnswer
-        fields = ('answer', )
-
-
-
 class QAnswerDetailModelSerializer(serializers.ModelSerializer):
-    # voted = serializers.SerializerMethodField(read_only=True)
+    # voted = serializers.SerializerMethodField(method_name='get_voted')
+
     creator = InteractionUserSerializer()
 
     class Meta:
@@ -77,30 +22,22 @@ class QAnswerDetailModelSerializer(serializers.ModelSerializer):
                   )
         # exclude = ('question', )
 
-        def get_voted(self, obj) -> bool:
-            """"
-            Check if the current user logged voted the question answer or not
-            """
-            request = self.context.get('request', None)
-            if request.user:
-                try:
-                    interaction_user = InteractionUser.objects.get(user_id=request.user.id)
-                    try:
-                        models.QAVote.objects.get(user=interaction_user)
-                        return True
-                    except models.QAVote.DoesNotExist:
-                        return False
-                except InteractionUser.DoesNotExist:
-                    return False
-            return False
-
-
-class QAVoteModelSerializer(serializers.ModelSerializer):
-    """ Serializer for votes to answers to questions """
-    class Meta:
-        model = models.QAVote
-        fields = '__all__'
-
+        # def get_voted(self, obj) -> bool:
+        #     """"
+        #     Check if the current user logged voted the question answer or not
+        #     """
+        #     request = self.context.get('request', None)
+        #     # if request.user:
+        #     #     try:
+        #     #         interaction_user = InteractionUser.objects.get(user_id=request.user.id)
+        #     #         try:
+        #     #             models.QAVote.objects.get(user=interaction_user)
+        #     #             return True
+        #     #         except models.QAVote.DoesNotExist:
+        #     #             return False
+        #     #     except InteractionUser.DoesNotExist:
+        #     #         return False
+        #     return False
 
 class QuestionDetailModelSerializer(serializers.ModelSerializer):
     voted = serializers.SerializerMethodField()
@@ -142,7 +79,6 @@ class QuestionDetailModelSerializer(serializers.ModelSerializer):
                   )
         # exclude = ('watchit_uuid', )
 
-
 class CustomQuestionConfig(serializers.ModelSerializer):
     """
     Serializer for customize questions configurations
@@ -156,33 +92,9 @@ class CustomQuestionConfig(serializers.ModelSerializer):
                   'answers_privacy',
                   )
 
-
-class QuestionModelSerializer(serializers.ModelSerializer):
-    """
-    Serializer for create and update questions
-    """
-    configuration = CustomQuestionConfig(allow_null=True)
-
-    class Meta:
-        model = models.Question
-        fields = ('question',
-                  'published',
-                  'streaming',
-                  'configuration',
-                  )
-
-    def update(self, instance, validated_data):
-        configuration_data = validated_data.pop('configuration', None)
-        if configuration_data:
-            question_config = instance.configuration
-            self.fields['configuration'].update(instance=question_config, validated_data=validated_data)
-        super().update(instance, validated_data)
-        return instance
-
-
 class QuestionCreateModelSerializer(serializers.ModelSerializer):
     """
-    Serializer for questions
+    Serializer for create questions
     """
     configuration = CustomQuestionConfig(allow_null=True)
 
@@ -225,8 +137,32 @@ class QuestionCreateModelSerializer(serializers.ModelSerializer):
         )
         return question
 
+class QuestionUpdateModelSerializer(serializers.ModelSerializer):
+    """
+    Serializer for update questions
+    """
+    configuration = CustomQuestionConfig(allow_null=True)
 
+    class Meta:
+        model = models.Question
+        fields = ('question',
+                  'published',
+                  'streaming',
+                  'configuration',
+                  )
 
+    def update(self, instance, validated_data):
+        configuration_data = validated_data.pop('configuration', None)
+        if configuration_data:
+            question_config = instance.configuration
+            self.fields['configuration'].update(instance=question_config, validated_data=configuration_data)
+        super().update(instance, validated_data)
+        return instance
 
+class ResponseVoteSerializer(serializers.Serializer):
+    voted = serializers.BooleanField()
 
-
+class QAnswerModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.QAnswer
+        fields = ('answer', )

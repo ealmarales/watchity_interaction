@@ -10,9 +10,13 @@ from rest_framework.routers import DefaultRouter
 from polls import views
 
 router = DefaultRouter()
-router.register('polls', views.PollViewSet, basename='polls')
+router.register('poll', views.PollViewSet, basename='polls')
 
 urlpatterns = [
-    path('watchit/<uuid:watchit_uuid>/', include(router.urls))
+    path('watchit/<uuid:watchit_uuid>/', include(router.urls)),
+    # path('watchit/<uuid:watchit_uuid>/question/<int:question_id>/answer/', views.QAnswerCreatorManager.as_view()),
+    # path('watchit/<uuid:watchit_uuid>/question/<int:question_id>/answer/<int:answer_id>', views.QAnswerManagerApiView.as_view()),
+
 ]
+
 

@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from users.models import InteractionUser
+
 RESULT_PRIVACY_CHOICES = (('EVERYONE', 'Everyone can see the results'),
                           ('CREATOR_AND_SPEAKERS', 'The creator and the speakers can see the results'),
                           ('ONLY_CREATOR', 'Only the creator can see the results'),
@@ -12,17 +14,6 @@ EXTERNAL_USERS_CHOICES = (
     ('PARTICIPANT', _('Participant user')),  # users logged with email in external API
 
 )
-class User(models.Model):
-    """
-    Users from external API
-    """
-    username = models.CharField(_('username'), max_length=150, unique=True)
-    screen_name = models.CharField(_('screen name'), max_length=255)
-    email = models.EmailField(_('email'))
-    type = models.CharField(_('user type'), max_length=20, choices=EXTERNAL_USERS_CHOICES)
-
-    def __str__(self):
-        return self.username
 
 
 class Interaction(models.Model):
@@ -36,7 +27,7 @@ class Interaction(models.Model):
 
     """
     watchit_uuid = models.UUIDField('event identifier')
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(InteractionUser, on_delete=models.CASCADE, )
     question = models.CharField(_('question'), max_length=256)
 
     creation_date = models.DateTimeField(auto_now_add=True)
@@ -82,6 +73,7 @@ class PollConfig(models.Model):
     """
     enabled = models.BooleanField(_('Visibility in Event Room'), default=True)
     show_in_event_room = models.BooleanField(_('Show polls in the Event Room'))
+    # TODO: Eliminar show_in_event_room
 
     answers_privacy = models.CharField(_('Defaults results privacy'), max_length=20, choices=RESULT_PRIVACY_CHOICES)
     multiple_answers = models.BooleanField(_('allow multiple answer answer'))
@@ -130,12 +122,12 @@ class PAnswer(models.Model):
 
     poll (Poll): Poll the one that the answer belongs to.
     selected_choice (list[Choice]): Choices selected in the answer.
-    participant_id (UUID): Identifier of the participant that responds.
+    participant_id (UUID): Identifier of participant that responds.
     creation_date (Date): Date of the answer.
     """
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
     selected_choice = models.ManyToManyField(Choice)
-    participant_id = models.UUIDField(_('participant identificator'))
+    participant_id = models.UUIDField(_('participant identifier'))
     creation_date = models.DateTimeField(_('creation_date'), auto_now=True)
 
     class Meta:
@@ -184,7 +176,7 @@ class QAnswer(models.Model):
     
     """
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
-    participant = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(InteractionUser, on_delete=models.CASCADE, )
     answer = models.CharField(_('answer'), max_length=256)
     creation_date = models.DateTimeField(_('creation_date'), auto_now=True)
 
@@ -203,7 +195,7 @@ class QAnswer(models.Model):
 
 class AbstractVote(models.Model):
     """ Abstract model for votes"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(InteractionUser, on_delete=models.CASCADE)
     creation_date = models.DateTimeField(_('creation_date'), auto_now=True)
 
     class Meta:
