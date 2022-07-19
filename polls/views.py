@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 
 from polls import serializers
 from polls_and_questions import models
+from polls_and_questions.models import Choice, Poll
 from users import authentication
 from users.models import InteractionUser
 
@@ -29,11 +30,16 @@ class PollViewSet(mixins.ListModelMixin,
     authentication_classes = (authentication.ExternTokenAuthentication, )
     permission_classes = (IsAuthenticated,)
 
+
     def get_queryset(self):
         return super().get_queryset().filter(watchit_uuid=self.kwargs.get('watchit_uuid'))
 
+    def retrieve(self, request, *args, **kwargs):
+        """ Retrieve a poll"""
+        return super().retrieve(request, *args, **kwargs)
+
     def list(self, request, *args, **kwargs):
-        """ Retrieve a list of polls"""
+        """ Retrieve a list of polls for one event"""
         return super().list(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
@@ -69,17 +75,63 @@ class PollViewSet(mixins.ListModelMixin,
             return Response(data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # @swagger_auto_schema(request_body=serializers.ResponseVoteSerializer)
-    # @action(detail=True, methods=['patch'])
-    # def vote_unvote(self, request, *args, **kwargs):
-    #     """" Vote / remove vote for a question """
-    #     question = self.get_object()
-    #     interaction_user = InteractionUser.objects.get(user_id=request.user.id)
-    #     try:
-    #         qvote = QVote.objects.get(question=question, user=interaction_user)
-    #         qvote.delete()
-    #         data = {'voted': False}
-    #     except QVote.DoesNotExist:
-    #         QVote.objects.create(question=question, user=interaction_user)
-    #         data = {'voted': True}
-    #     return data
+class ChoiceCreatorManager(APIView):
+    """
+    Manage Choices for poll creation
+    """
+    serializer_class = serializers.ChoiceModelSerializer
+    authentication_classes = (authentication.ExternTokenAuthentication, )
+    permission_classes = (IsAuthenticated,)
+
+    @swagger_auto_schema(request_body=serializers.ChoiceModelSerializer)
+    def post(self, request, watchit_uuid, poll_id, format=None):
+        """
+        Create a choice for poll in an event.
+        """
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            poll = get_object_or_404(Poll, id=poll_id)
+            Choice.objects.create(poll=poll,
+                                  choice=request.data.get('choice', ''),
+                                  )
+            data = serializers.PollDetailModelSerializer(poll).data
+            return Response(data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ChoiceManagerApiView(APIView):
+    """
+    Manage created choices for poll
+    """
+
+    serializer_class = serializers.ChoiceModelSerializer
+    authentication_classes = (authentication.ExternTokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+
+    def delete(self, request, watchit_uuid: UUID, poll_id: int, choice_id: int, format=None):
+        """
+        Remove an choice from poll.
+        """
+        choice = get_object_or_404(Choice, id=choice_id)
+        choice.delete()
+        return Response(status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(request_body=serializers.ChoiceModelSerializer)
+    def put(self, request, watchit_uuid: UUID, poll_id: int, choice_id: int, format=None):
+        """
+        Update a choice for poll in an event.
+        """
+
+        choice = get_object_or_404(Choice, id=choice_id)
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            serializer.update(instance=choice, validated_data=request.data)
+            poll = choice.poll
+            data = serializers.PollDetailModelSerializer(poll).data
+            return Response(data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+

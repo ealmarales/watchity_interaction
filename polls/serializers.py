@@ -106,3 +106,9 @@ class PollUpdateModelSerializer(serializers.ModelSerializer):
             self.fields['configuration'].update(instance=poll_config, validated_data=configuration_data)
         super().update(instance, validated_data)
         return instance
+
+class ChoiceModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Choice
+        fields = ('choice', )
+

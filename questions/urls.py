@@ -12,11 +12,12 @@ from questions import views
 router = DefaultRouter()
 router.register('question', views.QuestionViewSet, basename='questions')
 
+answer_router = DefaultRouter()
+answer_router.register('answer', views.QAnswerViewSet, basename='answers')
+
 urlpatterns = [
     path('watchit/<uuid:watchit_uuid>/', include(router.urls)),
-    path('watchit/<uuid:watchit_uuid>/question/<int:question_id>/answer/', views.QAnswerCreatorManager.as_view()),
-    path('watchit/<uuid:watchit_uuid>/question/<int:question_id>/answer/<int:answer_id>', views.QAnswerManagerApiView.as_view()),
-
+    path('watchit/<uuid:watchit_uuid>/question/<int:question_id>/', include(answer_router.urls)),
 ]
 
 
