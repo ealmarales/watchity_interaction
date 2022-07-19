@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from polls_and_questions import models
-from polls_and_questions.models import QVote, Question, QAnswer
+from polls_and_questions.models import QVote, Question, QAnswer, QAVote
 from questions import serializers
 from users import authentication
 from users.models import InteractionUser
@@ -148,19 +148,19 @@ class QAnswerViewSet(mixins.ListModelMixin,
             return Response(data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # @swagger_auto_schema(request_body=serializers.QAnswerDetailModelSerializer)
-    # @action(detail=True, methods=['patch'])
-    # def vote_unvote(self, request, *args, **kwargs):
-    #     """ Vote / remove vote answer of question """
-    #     question = self.get_object()
-    #     interaction_user = InteractionUser.objects.get(user_id=request.user.id)
-    #     try:
-    #         qvote = QVote.objects.get(question=question, user=interaction_user)
-    #         qvote.delete()
-    #     except QVote.DoesNotExist:
-    #         QVote.objects.create(question=question, user=interaction_user)
-    #     data = serializers.QuestionDetailModelSerializer(question, context={'request': request}).data
-    #     return Response(data, status=status.HTTP_200_OK)
+    @swagger_auto_schema(request_body=None)
+    @action(detail=True, methods=['patch'])
+    def vote_unvote(self, request, *args, **kwargs):
+        """ Vote / remove vote answer of question """
+        answer = self.get_object()
+        interaction_user = InteractionUser.objects.get(user_id=request.user.id)
+        try:
+            qavote = QAVote.objects.get(answer=answer, user=interaction_user)
+            qavote.delete()
+        except QAVote.DoesNotExist:
+            QAVote.objects.create(answer=answer, user=interaction_user)
+        data = serializers.QAnswerDetailModelSerializer(answer, context={'request': request}).data
+        return Response(data, status=status.HTTP_200_OK)
 
 
 

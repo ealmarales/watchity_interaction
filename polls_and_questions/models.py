@@ -106,7 +106,7 @@ class Choice(models.Model):
     order (int): Order for choice in poll's list of options will appear in.
 
     """
-    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='answers')
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='choices')
     choice = models.CharField(_('choice'), max_length=256)
 
     def __str__(self):

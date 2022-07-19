@@ -10,7 +10,7 @@ class PollDetailModelSerializer(serializers.ModelSerializer):
 
     creator = InteractionUserSerializer()
     configuration = PollConfigModelSerializer()
-    answers = serializers.StringRelatedField(many=True)
+    choices = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = models.Poll
@@ -18,7 +18,7 @@ class PollDetailModelSerializer(serializers.ModelSerializer):
                   'creator',
                   'creation_date',
                   'question',
-                  'answers',
+                  'choices',
                   'creation_date',
                   'published',
                   'streaming',

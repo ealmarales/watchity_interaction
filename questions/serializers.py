@@ -7,7 +7,7 @@ from users.models import InteractionUser
 from users.serializers import InteractionUserSerializer
 
 class QAnswerDetailModelSerializer(serializers.ModelSerializer):
-    # voted = serializers.SerializerMethodField(method_name='get_voted')
+    voted = serializers.SerializerMethodField()
 
     creator = InteractionUserSerializer()
 
@@ -16,28 +16,28 @@ class QAnswerDetailModelSerializer(serializers.ModelSerializer):
         fields = ('id',
                   'creator',
                   'answer',
-                  # 'voted',
+                  'voted',
                   'creation_date',
                   'votes_count',
                   )
         # exclude = ('question', )
 
-        # def get_voted(self, obj) -> bool:
-        #     """"
-        #     Check if the current user logged voted the question answer or not
-        #     """
-        #     request = self.context.get('request', None)
-        #     # if request.user:
-        #     #     try:
-        #     #         interaction_user = InteractionUser.objects.get(user_id=request.user.id)
-        #     #         try:
-        #     #             models.QAVote.objects.get(user=interaction_user)
-        #     #             return True
-        #     #         except models.QAVote.DoesNotExist:
-        #     #             return False
-        #     #     except InteractionUser.DoesNotExist:
-        #     #         return False
-        #     return False
+    def get_voted(self, obj) -> bool:
+            """"
+            Check if the current user logged voted the question answer or not
+            """
+            request = self.context.get('request', None)
+            if request.user:
+                try:
+                    interaction_user = InteractionUser.objects.get(user_id=request.user.id)
+                    try:
+                        models.QAVote.objects.get(user=interaction_user)
+                        return True
+                    except models.QAVote.DoesNotExist:
+                        return False
+                except InteractionUser.DoesNotExist:
+                    return False
+            return False
 
 class QuestionDetailModelSerializer(serializers.ModelSerializer):
     voted = serializers.SerializerMethodField()
