@@ -110,5 +110,7 @@ class PollUpdateModelSerializer(serializers.ModelSerializer):
 class ChoiceModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Choice
-        fields = ('choice', )
+        fields = '__all__'
+        read_only_fields = ['id', 'poll']
+
 

@@ -95,48 +95,28 @@ class ChoiceViewSet(mixins.RetrieveModelMixin,
         """Remove a choice from poll  """
         return super().destroy(request, *args, **kwargs)
 
-    # @swagger_auto_schema(request_body=serializers.QAnswerModelSerializer)
-    # def create(self, request, *args, **kwargs):
-    #     """ Create answer of question """
-    #     serializer = serializers.QAnswerModelSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         creator = InteractionUser.objects.get(user_id=request.user.id)
-    #         question = get_object_or_404(Question, id=self.kwargs.get('question_id'))
-    #         answer = QAnswer.objects.create(question=question,
-    #                                         creator=creator,
-    #                                         answer=request.data.get('answer', ''),
-    #                                         )
-    #         data = serializers.QAnswerDetailModelSerializer(answer, context={'request': request}).data
-    #         return Response(data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #
-    # @swagger_auto_schema(request_body=serializers.QAnswerModelSerializer)
-    # def update(self, request, *args, **kwargs):
-    #     """ Update answer of question """
-    #
-    #     answer = self.get_object()
-    #     serializer = serializers.QAnswerModelSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.update(instance=answer,
-    #                           validated_data=request.data,
-    #                           )
-    #         data = serializers.QAnswerDetailModelSerializer(answer, context={'request': request}).data
-    #         return Response(data, status=status.HTTP_200_OK)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @swagger_auto_schema(request_body=serializers.ChoiceModelSerializer)
+    def create(self, request, *args, **kwargs):
+        """ Create a choice of poll """
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            poll = get_object_or_404(Poll, id=self.kwargs.get('poll_id'))
+            choice = Choice.objects.create(poll=poll,
+                                           choice=request.data.get('choice', ''),
+                                           )
+            data = self.serializer_class(choice).data
+            return Response(data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # @swagger_auto_schema(request_body=None)
-    # @action(detail=True, methods=['patch'])
-    # def vote_unvote(self, request, *args, **kwargs):
-    #     """ Vote / remove vote answer of question """
-    #     answer = self.get_object()
-    #     interaction_user = InteractionUser.objects.get(user_id=request.user.id)
-    #     try:
-    #         qavote = QAVote.objects.get(answer=answer, user=interaction_user)
-    #         qavote.delete()
-    #     except QAVote.DoesNotExist:
-    #         QAVote.objects.create(answer=answer, user=interaction_user)
-    #     data = serializers.QAnswerDetailModelSerializer(answer, context={'request': request}).data
-    #     return Response(data, status=status.HTTP_200_OK)
-    #
-    #
-
+    @swagger_auto_schema(request_body=serializers.ChoiceModelSerializer)
+    def update(self, request, *args, **kwargs):
+        """Update a choice of poll   """
+        choice = self.get_object()
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.update(instance=choice,
+                              validated_data=request.data,
+                              )
+            data = self.serializer_class(choice).data
+            return Response(data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

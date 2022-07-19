@@ -103,7 +103,6 @@ class Choice(models.Model):
 
     poll (Poll): Poll the one that the option belongs to.
     choice (str): label for the choice.
-    order (int): Order for choice in poll's list of options will appear in.
 
     """
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='choices')
