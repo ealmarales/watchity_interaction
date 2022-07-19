@@ -31,7 +31,7 @@ class QAnswerDetailModelSerializer(serializers.ModelSerializer):
                 try:
                     interaction_user = InteractionUser.objects.get(user_id=request.user.id)
                     try:
-                        models.QAVote.objects.get(user=interaction_user)
+                        models.QAVote.objects.get(user=interaction_user, answer=obj)
                         return True
                     except models.QAVote.DoesNotExist:
                         return False
@@ -40,11 +40,11 @@ class QAnswerDetailModelSerializer(serializers.ModelSerializer):
             return False
 
 class QuestionDetailModelSerializer(serializers.ModelSerializer):
+    """" Serializer for details of Questions"""
     voted = serializers.SerializerMethodField()
 
     configuration = QuestionConfigModelSerializer()
     creator = InteractionUserSerializer()
-    answers = QAnswerDetailModelSerializer(many=True)
 
     def get_voted(self, obj) -> bool:
         """"
@@ -55,7 +55,7 @@ class QuestionDetailModelSerializer(serializers.ModelSerializer):
             try:
                 interaction_user = InteractionUser.objects.get(user_id=request.user.id)
                 try:
-                    models.QVote.objects.get(user=interaction_user)
+                    models.QVote.objects.get(user=interaction_user, question=obj)
                     return True
                 except models.QVote.DoesNotExist:
                     return False
@@ -72,7 +72,6 @@ class QuestionDetailModelSerializer(serializers.ModelSerializer):
                   'creation_date',
                   'question',
                   'voted',
-                  'answers',
                   'votes_count',
                   'published',
                   'streaming',
@@ -81,7 +80,7 @@ class QuestionDetailModelSerializer(serializers.ModelSerializer):
 
 class CustomQuestionConfig(serializers.ModelSerializer):
     """
-    Serializer for customize questions configurations
+    Serializer for customize question configuration
     """
 
     class Meta:

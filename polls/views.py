@@ -78,7 +78,7 @@ class PollViewSet(mixins.ListModelMixin,
 class ChoiceViewSet(mixins.RetrieveModelMixin,
                       # mixins.CreateModelMixin,
                       # mixins.UpdateModelMixin,
-                      # mixins.DestroyModelMixin,
+                      mixins.DestroyModelMixin,
                       viewsets.GenericViewSet):
     """ Manage Polls Choices """
 
@@ -90,18 +90,11 @@ class ChoiceViewSet(mixins.RetrieveModelMixin,
     def get_queryset(self):
         return super().get_queryset().filter(poll__id=self.kwargs.get('poll_id'))
 
-    # def list(self, request, *args, **kwargs):
-    #     """ Retrieve a list of answers for question"""
-    #     return super().list(request, *args, **kwargs)
-    #
-    # def retrieve(self, request, *args, **kwargs):
-    #     """Retrieve an answer of question  """
-    #     return super().retrieve(request, *args, **kwargs)
-    #
-    # def destroy(self, request, *args, **kwargs):
-    #     """Remove an answer of question  """
-    #     return super().destroy(request, *args, **kwargs)
-    #
+
+    def destroy(self, request, *args, **kwargs):
+        """Remove a choice from poll  """
+        return super().destroy(request, *args, **kwargs)
+
     # @swagger_auto_schema(request_body=serializers.QAnswerModelSerializer)
     # def create(self, request, *args, **kwargs):
     #     """ Create answer of question """
