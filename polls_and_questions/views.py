@@ -75,7 +75,7 @@ class DefaultConfigPollManagerApiView(ConfigManager):
         super().__init__(*args, **kwargs)
         self.serializer_class = serializers.PollConfigModelSerializer
 
-    def get(self, request, watchit_uuid, format=None):
+    def get(self, request, playersettings_uuid, watchit_uuid, format=None):
         """
         Retrieve default polls configuration for an event.
         """
@@ -88,7 +88,7 @@ class DefaultConfigPollManagerApiView(ConfigManager):
         raise NotFound({'watchit_uuid': _('poll config not found')})
 
     @swagger_auto_schema(request_body=serializers.PollConfigModelSerializer)
-    def post(self, request, watchit_uuid, format=None):
+    def post(self, request, playersettings_uuid, watchit_uuid, format=None):
         """
         Save default poll configuration for an event.
         """
@@ -110,7 +110,7 @@ class DefaultConfigPollManagerApiView(ConfigManager):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(request_body=serializers.PollConfigModelSerializer)
-    def put(self, request, watchit_uuid, format=None):
+    def put(self, request, playersettings_uuid, watchit_uuid, format=None):
         """ Update default poll configuration for an event. """
 
         self._validate_watchit_uuid(watchit_uuid=watchit_uuid)
@@ -135,7 +135,7 @@ class DefaultConfigQuestionManagerApiView(ConfigManager):
         super().__init__(*args, **kwargs)
         self.serializer_class = serializers.QuestionConfigModelSerializer
 
-    def get(self, request, watchit_uuid, format=None):
+    def get(self, request, playersettings_uuid, watchit_uuid, format=None):
         """ Retrieve default question configuration for an event.
         """
         self._validate_watchit_uuid(watchit_uuid=watchit_uuid)
@@ -147,7 +147,7 @@ class DefaultConfigQuestionManagerApiView(ConfigManager):
         raise NotFound({'watchit_uuid': _('question config not found')})
 
     @swagger_auto_schema(request_body=serializers.QuestionConfigModelSerializer)
-    def post(self, request, watchit_uuid, format=None):
+    def post(self, request, playersettings_uuid, watchit_uuid, format=None):
         """
         Save default question configuration for an event.
         """
@@ -168,7 +168,7 @@ class DefaultConfigQuestionManagerApiView(ConfigManager):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(request_body=serializers.QuestionConfigModelSerializer)
-    def put(self, request, watchit_uuid, format=None):
+    def put(self, request, playersettings_uuid, watchit_uuid, format=None):
         """ Update default question configuration for an event. """
 
         self._validate_watchit_uuid(watchit_uuid=watchit_uuid)
@@ -195,7 +195,7 @@ class PollManagerApiView(ConfigManager):
         super().__init__(*args, **kwargs)
         self.serializer_class = serializers.PollModelSerializer
 
-    def get(self, request, watchit_uuid: UUID, poll_id: int, format=None):
+    def get(self, request, playersettings_uuid, watchit_uuid: UUID, poll_id: int, format=None):
         """
         Retrieve poll instance given a poll identifier.
         Args:
@@ -246,7 +246,7 @@ class QuestionManagerApiView(ConfigManager):
         super().__init__(*args, **kwargs)
         self.serializer_class = serializers.QuestionDetailModelSerializer
 
-    def get(self, request, watchit_uuid: UUID, question_id: int, format=None):
+    def get(self, request, playersettings_uuid, watchit_uuid: UUID, question_id: int, format=None):
         """
         Retrieve question instance given a watchit identifier and question identifier.
         """
@@ -259,7 +259,7 @@ class QuestionManagerApiView(ConfigManager):
             raise NotFound({'question_id': _('question not found')})
 
     @swagger_auto_schema(request_body=serializers.QuestionModelSerializer)
-    def put(self, request, watchit_uuid, question_id: int, format=None):
+    def put(self, request, playersettings_uuid, watchit_uuid, question_id: int, format=None):
         """
         Update a question.
         """
@@ -294,7 +294,7 @@ class QuestionManagerApiView(ConfigManager):
         except Question.DoesNotExist:
             raise NotFound({'question_id': _('question not found')})
 
-    def delete(self, request, watchit_uuid: UUID, question_id: int, format=None):
+    def delete(self, request, playersettings_uuid, watchit_uuid: UUID, question_id: int, format=None):
         """
         Remove question instance given a watchit identifier and question identifier.
         """
@@ -316,7 +316,7 @@ class QuestionCreatorManager(ConfigManager):
 
 
     @swagger_auto_schema(request_body=serializers.QuestionCreateModelSerializer)
-    def post(self, request, watchit_uuid, format=None):
+    def post(self, playersettings_uuid, request, watchit_uuid, format=None):
         """
         Create a  question in an event.
         """
@@ -367,7 +367,7 @@ class QAnswerManagerApiView(ConfigManager):
         else:
             raise NotFound({'answer_id': _('answer not found')})
 
-    def get(self, request, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
+    def get(self, request, playersettings_uuid, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
         """
         Retrieve answer to question.
         """
@@ -375,7 +375,7 @@ class QAnswerManagerApiView(ConfigManager):
         data = self.serializer_class(answer).data
         return Response(data, status=status.HTTP_200_OK)
 
-    def delete(self, request, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
+    def delete(self, request, playersettings_uuid, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
         """
         Remove an answer to question.
         """
@@ -385,7 +385,7 @@ class QAnswerManagerApiView(ConfigManager):
         return Response(data, status=status.HTTP_200_OK)
 
 
-    def patch(self, request, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
+    def patch(self, request, playersettings_uuid, watchit_uuid: UUID, question_id: int, answer_id: int, format=None):
         """
         Vote / Remove Vote for answer to question.
         """
@@ -437,7 +437,7 @@ class QAnswerCreatorManager(ConfigManager):
 
 
     @swagger_auto_schema(request_body=serializers.QAnswerModelSerializer)
-    def post(self, request, watchit_uuid, question_id, format=None):
+    def post(self, request, playersettings_uuid, watchit_uuid, question_id, format=None):
         """
         Create an answer to question in an event.
         """
