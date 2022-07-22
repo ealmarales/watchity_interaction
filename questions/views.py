@@ -27,7 +27,9 @@ class QuestionViewSet(mixins.ListModelMixin,
 
     queryset = models.Question.objects.all()
     serializer_class = serializers.QuestionDetailModelSerializer
-    authentication_classes = (authentication.ExternTokenAuthentication, )
+    authentication_classes = (authentication.ExternTokenAuthentication,
+                              authentication.ExternViewerSessionAuthentication,
+                              )
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
@@ -99,7 +101,9 @@ class QAnswerViewSet(mixins.ListModelMixin,
 
     queryset = models.QAnswer.objects.all()
     serializer_class = serializers.QAnswerDetailModelSerializer
-    authentication_classes = (authentication.ExternTokenAuthentication, )
+    authentication_classes = (authentication.ExternTokenAuthentication,
+                              authentication.ExternViewerSessionAuthentication,
+                              )
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
