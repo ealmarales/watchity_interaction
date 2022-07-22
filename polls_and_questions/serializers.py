@@ -193,6 +193,7 @@ class QuestionCreateModelSerializer(serializers.ModelSerializer):
                   )
 
     def create(self, watchit_uuid, creator, validated_data):
+
         configuration_data = validated_data.pop('configuration', None)
         configuration = None
         if configuration_data:

@@ -16,8 +16,8 @@ answer_router = DefaultRouter()
 answer_router.register('answer', views.QAnswerViewSet, basename='answers')
 
 urlpatterns = [
-    path('watchit/<uuid:watchit_uuid>/', include(router.urls)),
-    path('watchit/<uuid:watchit_uuid>/question/<int:question_id>/', include(answer_router.urls)),
+    path('watchit/<uuid:watchit_uuid>/playersettings/<uuid:playersettings_uuid>/', include(router.urls)),
+    path('watchit/<uuid:watchit_uuid>/playersettings/<uuid:playersettings_uuid>/question/<int:question_id>/', include(answer_router.urls)),
 ]
 
 

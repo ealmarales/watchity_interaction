@@ -152,18 +152,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.SessionAuthentication',
+        'users.authentication.ExternViewerSessionAuthentication',
         'users.authentication.ExternTokenAuthentication',
+
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10
 }
 
-SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITION': {
-        'DRF Token': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header'
-        }
-    }
-}
+

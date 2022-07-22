@@ -1,9 +1,11 @@
 from rest_framework import serializers
+
+
 from rest_framework.exceptions import ValidationError
 
 from polls_and_questions import models
 from polls_and_questions.serializers import PollConfigModelSerializer
-from users.models import InteractionUser
+
 from users.serializers import InteractionUserSerializer
 
 class PollDetailModelSerializer(serializers.ModelSerializer):
@@ -26,7 +28,6 @@ class PollDetailModelSerializer(serializers.ModelSerializer):
                   )
         # exclude = ('question', )
 
-
 class CustomPollConfig(serializers.ModelSerializer):
     """
     Serializer for customize polls configurations
@@ -40,16 +41,24 @@ class CustomPollConfig(serializers.ModelSerializer):
                   'answering_time_limit',
                   )
 
+class ChoiceModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Choice
+        fields = '__all__'
+        read_only_fields = ['id', 'poll']
+
 class PollCreateModelSerializer(serializers.ModelSerializer):
     """
     Serializer for create polls
     """
     configuration = CustomPollConfig(allow_null=True)
+    choices = ChoiceModelSerializer(many=True)
 
     class Meta:
-        model = models.Question
+        model = models.Poll
         fields = ('question',
                   'configuration',
+                  'choices',
                   )
 
     def create(self, watchit_uuid, creator, validated_data):
@@ -107,10 +116,38 @@ class PollUpdateModelSerializer(serializers.ModelSerializer):
         super().update(instance, validated_data)
         return instance
 
-class ChoiceModelSerializer(serializers.ModelSerializer):
+class PAnswerModelSerializer(serializers.ModelSerializer):
+    selected_choice = serializers.StringRelatedField(many=True, read_only=True)
+    creator = InteractionUserSerializer(read_only=True)
+
+
     class Meta:
-        model = models.Choice
-        fields = '__all__'
-        read_only_fields = ['id', 'poll']
+        model = models.PAnswer
+        fields = ('id',
+                  'selected_choice',
+                  'creator',
+                  'creation_date',
+                  )
+
+
+class PAnswerCreateSerializer(serializers.ModelSerializer):
+    """Serializer for create answers to polls"""
+    class Meta:
+        model = models.PAnswer
+        fields = ('selected_choice',)
+
+    def create(self, poll, creator, validated_data):
+        selected_choice = []
+        for choice_id in validated_data.get('selected_choice'):
+            selected_choice.append(models.Choice.objects.get(id=choice_id))
+        panswer = models.PAnswer.objects.create(
+            poll=poll,
+            creator=creator,
+        )
+
+        return panswer
+
+
+
 
 

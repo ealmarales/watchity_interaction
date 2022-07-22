@@ -10,7 +10,7 @@ RESULT_PRIVACY_CHOICES = (('EVERYONE', 'Everyone can see the results'),
                           )
 
 EXTERNAL_USERS_CHOICES = (
-    ('SYSTEM', _('Sistem user')), # users with accounts in external API
+    ('SYSTEM', _('Sistem user')),  # users with accounts in external API
     ('PARTICIPANT', _('Participant user')),  # users logged with email in external API
 
 )
@@ -128,6 +128,9 @@ class PAnswer(models.Model):
 
     class Meta:
         verbose_name = _('poll answer')
+
+    def __str__(self):
+        return "%s : %s" % (self.creator, self.poll)
 
 
 class QuestionConfig(models.Model):

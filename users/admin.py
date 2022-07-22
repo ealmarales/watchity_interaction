@@ -8,4 +8,4 @@ from users.models import InteractionUser
 
 @admin.register(InteractionUser)
 class UserAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('user', 'screen_name', 'type')

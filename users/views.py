@@ -1,6 +1,5 @@
 from rest_framework import generics
 
-from polls.models import Question
 from users import serializers
 from users.models import InteractionUser
 
